@@ -25,6 +25,14 @@ control)
   (with `Wrap`: goes to `Min`); at `Min` the down arrow keeps it (with `Wrap`:
   goes to `Max`). `UpClick` and `DownClick` are raised even when `Value` does
   not change.
+- **Buddy.** `BuddyControl` is a control (`Set`) or, in a form file, its name;
+  `BuddyProperty` is the buddy's property by name (a dispatch id in a form file
+  stands for the buddy's default property); with `AutoBuddy` the buddy is the
+  control before the UpDown in the form's creation order. While `SyncBuddy` is
+  True the buddy's property is set to `Value` when the form loads and whenever
+  `Value` changes (text for `Text` and `Caption`, a number otherwise), and
+  reading `Value` takes the number the buddy holds, kept inside `Min` and
+  `Max` (a buddy that holds no number leaves `Value` as it is).
 - **Win32 host.** The control is a system up-down control
   (`msctls_updown32`), vertical or horizontal (`Orientation` 1), with the range,
   the position, `Wrap` and `Increment` of the model; a click on an arrow runs
@@ -34,12 +42,13 @@ control)
 
 ## Known limits
 
-`BuddyControl`, `BuddyProperty`, `AutoBuddy` and `SyncBuddy` hold their values
-but the buddy is not kept in step with `Value` yet; `Acceleration` is stored
-and not used; the order of `UpClick`/`DownClick` and `Change` follows the
-documentation's wording, not a probe of the Microsoft control.
+`Acceleration` is stored and not used; the buddy follows `Value` when the form
+loads and when `Value` changes, but a buddy that the user edits is only read
+when `Value` is read (no event is raised); the order of `UpClick`/`DownClick`
+and `Change` follows the documentation's wording, not a probe of the Microsoft
+control.
 
 ## Verification
 
 Corpus `211-mscomctl2-updown` (properties, range errors, clicks, wrap and the
-event order); the example `examples/updown` shows both orientations.
+event order) and `213-mscomctl2-updown-buddy` (the buddy); the example `examples/updown` shows both orientations.

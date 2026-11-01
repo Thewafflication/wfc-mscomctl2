@@ -1,0 +1,13 @@
+load5 5 /0 0 
+typed 8 
+clamped 9 
+text 9 
+change1 2 2
+set2
+change2 20 20
+auto20
+change2 30 20
+unsynced20
+change1 3 3
+change1 2 2
+change2 35 20

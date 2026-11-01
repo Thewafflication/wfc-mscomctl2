@@ -23,7 +23,7 @@ dispatch id.
 
 | Control | Status |
 | --- | --- |
-| UpDown | Implemented ([REQ-0308](requirements/req-0308-updown.md)): defaults, range and `Change`, `UpClick`/`DownClick`, `Increment`, `Wrap`, both orientations, the Win32 up-down control. The buddy (`BuddyControl`, `SyncBuddy`) is stored, not kept in step yet. |
+| UpDown | Implemented ([REQ-0308](requirements/req-0308-updown.md)): defaults, range and `Change`, `UpClick`/`DownClick`, `Increment`, `Wrap`, both orientations, the Win32 up-down control. The buddy (`BuddyControl`, `BuddyProperty`, `SyncBuddy`, `AutoBuddy`) follows `Value`. |
 | FlatScrollBar | Implemented ([REQ-0309](requirements/req-0309-flatscrollbar.md)): behaves as the intrinsic scroll bars (range, `Change`, `Scroll`, both orientations) on a system scroll bar; `Appearance` and `Arrows` are stored, the flat style is not drawn yet. |
 | MonthView, DTPicker, Animation | None yet: a form that contains one is refused as an unsupported control. |
 
@@ -44,6 +44,6 @@ the Microsoft ones yet. The order is in [ROADMAP.md](ROADMAP.md).
   points and version resource, and registers and unregisters it.
 - A table test (`tests/mscomctl2_tables_test.cpp`) checks the five classes and
   their member kinds.
-- The corpus programs `211-mscomctl2-updown` and `212-mscomctl2-flatscrollbar` (run by WFC) test the UpDown and the FlatScrollBar.
+- The corpus programs `211-mscomctl2-updown`, `212-mscomctl2-flatscrollbar` and `213-mscomctl2-updown-buddy` (run by WFC) test the UpDown and the FlatScrollBar.
 - WFC compares the table with the evidence
   (`TC-MP0010-mscomctl2-tables-current`).

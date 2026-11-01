@@ -27,7 +27,7 @@ requirement:
 
 - [x] UpDown (Value, Min, Max, Increment, Wrap, Orientation, `Change`,
       `UpClick`, `DownClick`; REQ-0308, corpus 211, `examples/updown`).
-- [ ] UpDown buddy: `BuddyControl`, `BuddyProperty`, `SyncBuddy`, `AutoBuddy`.
+- [x] UpDown buddy: `BuddyControl`, `BuddyProperty`, `SyncBuddy`, `AutoBuddy` (corpus 213).
 - [x] FlatScrollBar (Min, Max, Value, LargeChange, SmallChange, Orientation,
       `Change`, `Scroll`; REQ-0309, corpus 212, `examples/flatscrollbar`).
 - [ ] FlatScrollBar drawn in the flat style (`Appearance`, `Arrows`).
