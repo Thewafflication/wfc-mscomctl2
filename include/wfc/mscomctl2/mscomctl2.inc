@@ -583,3 +583,297 @@ void monthview_snapshot(ControlObject& self, ui::CommonSnapshot& snapshot) {
     snapshot.first_day = month_first_day(self);
     snapshot.max_select = property_whole(self, "maxselcount");
 }
+
+// ----- DTPicker ------------------------------------------------------------------
+//
+// A date and time picker. Value is a Date (a Null Variant while CheckBox is
+// True and the box is cleared); Format (0 long date, 1 short date, 2 time, 3
+// CustomFormat) says how it is shown; UpDown replaces the drop-down calendar
+// with spin arrows. Day, Month, Year, Hour, Minute, Second and DayOfWeek are the
+// parts of Value (Null when it is Null). MinDate and MaxDate keep it in range
+// (380 outside). Change is raised when Value changes, by code or by the user;
+// DropDown and CloseUp bracket the calendar. In scripts: `ui <control> value
+// yyyy-mm-dd[ hh:mm:ss]`, `ui <control> check on|off`, `ui <control> dropdown`
+// and `ui <control> closeup`. The behaviour follows the documented control;
+// there is no reference probe.
+
+namespace {
+
+// Now, as a date serial with the time of day.
+[[nodiscard]] double picker_now() {
+    const std::time_t now = std::time(nullptr);
+    std::tm local{};
+#ifdef _WIN32
+    localtime_s(&local, &now);
+#else
+    localtime_r(&now, &local);
+#endif
+    return date_serial(local.tm_year + 1900, local.tm_mon + 1, local.tm_mday) +
+           (local.tm_hour * 3600.0 + local.tm_min * 60.0 + local.tm_sec) /
+               86400.0;
+}
+
+// The date of a form file (CurrentDate, with the time as the fraction), or now.
+[[nodiscard]] double picker_design_date(ControlObject& self) {
+    const auto found = self.values.find("currentdate");
+    if (found != self.values.end() &&
+        !std::holds_alternative<std::string>(found->second)) {
+        return as_double(found->second);
+    }
+    return picker_now();
+}
+
+[[nodiscard]] bool picker_is_null(ControlObject& self) {
+    const auto found = self.values.find("value");
+    return found != self.values.end() &&
+           std::holds_alternative<Null>(found->second);
+}
+
+[[nodiscard]] double picker_value(ControlObject& self) {
+    const auto found = self.values.find("value");
+    if (found != self.values.end()) {
+        if (const auto* date = std::get_if<DateValue>(&found->second)) {
+            return date->serial;
+        }
+    }
+    return picker_design_date(self);
+}
+
+// The Format property: a form file keeps flag bits above the number.
+[[nodiscard]] long picker_format(ControlObject& self) {
+    const long format = property_whole(self, "format") & 0xFFFF;
+    return format >= 0 && format <= 3 ? format : 0;
+}
+
+[[nodiscard]] bool picker_in_range(ControlObject& self, const double serial) {
+    const double day = std::floor(serial);
+    return day >= month_date_of(self, "mindate", month_first_date()) &&
+           day <= month_date_of(self, "maxdate", month_last_date());
+}
+
+// `yyyy-mm-dd` with an optional ` hh:mm:ss` to a serial.
+[[nodiscard]] bool picker_parse(const std::string& date, const std::string& time,
+                                double& serial) {
+    double day = 0;
+    if (!month_parse(date, day)) {
+        return false;
+    }
+    double fraction = 0;
+    if (!time.empty()) {
+        char* end = nullptr;
+        const long hour = std::strtol(time.c_str(), &end, 10);
+        const long minute = *end == ':' ? std::strtol(end + 1, &end, 10) : 0;
+        const long second = *end == ':' ? std::strtol(end + 1, &end, 10) : 0;
+        if (hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 ||
+            second > 59) {
+            return false;
+        }
+        fraction = (hour * 3600.0 + minute * 60.0 + second) / 86400.0;
+    }
+    serial = day + fraction;
+    return true;
+}
+
+}  // namespace
+
+[[nodiscard]] bool dtpicker_get(Interpreter& in, ControlObject& self,
+                                const std::string& member, Value& result) {
+    static_cast<void>(in);
+    if (member == "value") {
+        result = picker_is_null(self) ? Value{Null{}}
+                                      : month_date_value(picker_value(self));
+        return true;
+    }
+    if (member == "format") {
+        result = Value{static_cast<Int16>(picker_format(self))};
+        return true;
+    }
+    if (member == "mindate" || member == "maxdate") {
+        result = month_date_value(
+            member == "mindate"
+                ? month_date_of(self, "mindate", month_first_date())
+                : month_date_of(self, "maxdate", month_last_date()));
+        return true;
+    }
+    if (member == "day" || member == "month" || member == "year" ||
+        member == "hour" || member == "minute" || member == "second" ||
+        member == "dayofweek") {
+        if (picker_is_null(self)) {
+            result = Value{Null{}};
+            return true;
+        }
+        const auto parts = split_date(picker_value(self));
+        const std::int64_t number = member == "day"      ? parts.day
+                            : member == "month"  ? parts.month
+                            : member == "year"   ? parts.year
+                            : member == "hour"   ? parts.hour
+                            : member == "minute" ? parts.minute
+                            : member == "second" ? parts.second
+                                                 : parts.weekday;
+        result = Value{static_cast<Int16>(number)};
+        return true;
+    }
+    return false;
+}
+
+[[nodiscard]] bool dtpicker_put(Interpreter& in, ControlObject& self,
+                                const std::string& member, const Value& value,
+                                NativeFailure& failure) {
+    const auto invalid = [&] {
+        failure = NativeFailure{380, "Invalid property value"};
+        return true;
+    };
+    if (member == "value") {
+        if (std::holds_alternative<Null>(value)) {
+            if (!property_flag(self, "checkbox")) {
+                return invalid();
+            }
+            const bool changed = !picker_is_null(self);
+            self.values["value"] = Value{Null{}};
+            return !changed || raise_event(in, self, "Change", {});
+        }
+        Value converted = value;
+        if (!coerce_property(in, converted, "Date", failure)) {
+            return true;
+        }
+        const auto* date = std::get_if<DateValue>(&converted);
+        if (date == nullptr || !picker_in_range(self, date->serial)) {
+            return invalid();
+        }
+        const bool changed =
+            picker_is_null(self) || date->serial != picker_value(self);
+        self.values["value"] = month_date_value(date->serial);
+        return !changed || raise_event(in, self, "Change", {});
+    }
+    if (member == "mindate" || member == "maxdate") {
+        Value converted = value;
+        if (!coerce_property(in, converted, "Date", failure)) {
+            return true;
+        }
+        const auto* date = std::get_if<DateValue>(&converted);
+        if (date == nullptr) {
+            return invalid();
+        }
+        const double wanted = std::floor(date->serial);
+        const double low =
+            member == "mindate" ? wanted
+                                : month_date_of(self, "mindate", month_first_date());
+        const double high =
+            member == "maxdate" ? wanted
+                                : month_date_of(self, "maxdate", month_last_date());
+        if (low > high) {
+            return invalid();
+        }
+        self.values[member] = month_date_value(wanted);
+        if (!picker_is_null(self)) {
+            const double current = picker_value(self);
+            const double day = std::floor(current);
+            const double fraction = current - day;
+            if (day < low) {
+                self.values["value"] = month_date_value(low + fraction);
+            } else if (day > high) {
+                self.values["value"] = month_date_value(high + fraction);
+            }
+        }
+        return true;
+    }
+    if (member == "day" || member == "month" || member == "year" ||
+        member == "hour" || member == "minute" || member == "second") {
+        if (picker_is_null(self)) {
+            return invalid();
+        }
+        Value converted = value;
+        if (!coerce_property(in, converted, "Long", failure)) {
+            return true;
+        }
+        const long number = static_cast<long>(as_double(converted));
+        const auto parts = split_date(picker_value(self));
+        long year = static_cast<long>(parts.year);
+        long month = static_cast<long>(parts.month);
+        long day = static_cast<long>(parts.day);
+        long hour = static_cast<long>(parts.hour);
+        long minute = static_cast<long>(parts.minute);
+        long second = static_cast<long>(parts.second);
+        (member == "year"     ? year
+         : member == "month"  ? month
+         : member == "day"    ? day
+         : member == "hour"   ? hour
+         : member == "minute" ? minute
+                              : second) = number;
+        if (year < 1601 || year > 9999 || month < 1 || month > 12 || day < 1 ||
+            hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 ||
+            second > 59 ||
+            (member == "day" && day > days_in_month(year, month))) {
+            return invalid();
+        }
+        day = std::min<long>(day, static_cast<long>(days_in_month(year, month)));
+        const double serial =
+            date_serial(year, month, day) +
+            (hour * 3600.0 + minute * 60.0 + second) / 86400.0;
+        if (!picker_in_range(self, serial)) {
+            return invalid();
+        }
+        const bool changed = serial != picker_value(self);
+        self.values["value"] = month_date_value(serial);
+        return !changed || raise_event(in, self, "Change", {});
+    }
+    return false;
+}
+
+// Scripted input: the user picks a value, ticks the box, opens the calendar.
+[[nodiscard]] bool dtpicker_input(Interpreter& in, ControlObject& self,
+                                  const std::string& action,
+                                  const std::string& rest) {
+    std::istringstream words(rest);
+    std::string first;
+    std::string second;
+    words >> first >> second;
+    if (action == "dropdown") {
+        return raise_event(in, self, "DropDown", {});
+    }
+    if (action == "closeup") {
+        return raise_event(in, self, "CloseUp", {});
+    }
+    if (action == "check") {
+        if (!property_flag(self, "checkbox")) {
+            return true;
+        }
+        const bool on = first == "on" || first == "1" || first == "true";
+        if (on == !picker_is_null(self)) {
+            return true;
+        }
+        if (on) {
+            const auto last = self.values.find("lastvalue");
+            self.values["value"] =
+                last != self.values.end() ? last->second
+                                          : month_date_value(picker_design_date(self));
+        } else {
+            self.values["lastvalue"] = month_date_value(picker_value(self));
+            self.values["value"] = Value{Null{}};
+        }
+        return raise_event(in, self, "Change", {});
+    }
+    if (action == "value") {
+        double serial = 0;
+        if (!picker_parse(first, second, serial) ||
+            !picker_in_range(self, serial)) {
+            return true;
+        }
+        const bool changed =
+            picker_is_null(self) || serial != picker_value(self);
+        self.values["value"] = month_date_value(serial);
+        return !changed || raise_event(in, self, "Change", {});
+    }
+    return true;
+}
+
+// What the host draws.
+void dtpicker_snapshot(ControlObject& self, ui::CommonSnapshot& snapshot) {
+    snapshot.date_value = picker_is_null(self) ? 0.0 : picker_value(self);
+    snapshot.date_min = month_date_of(self, "mindate", month_first_date());
+    snapshot.date_max = month_date_of(self, "maxdate", month_last_date());
+    snapshot.style = picker_format(self);
+    snapshot.text = property_text(self, "customformat");
+    snapshot.checkboxes = property_flag(self, "checkbox");
+    snapshot.select_range = picker_is_null(self);  // the box is cleared
+}

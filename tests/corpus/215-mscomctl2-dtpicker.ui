@@ -1,0 +1,9 @@
+ui Form1.DTPicker1 dropdown
+ui Form1.DTPicker1 value 2027-05-06 07:08:09
+ui Form1.DTPicker1 closeup
+ui Form1.DTPicker1 value 2027-05-06 07:08:09
+ui Form1.DTPicker1 value 2030-01-01
+ui Form1.DTPicker2 check on
+ui Form1.DTPicker2 check off
+ui Form1.DTPicker2 check off
+close Form1

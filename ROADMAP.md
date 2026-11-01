@@ -34,8 +34,10 @@ requirement:
 - [x] MonthView (Value, the date range, selections, `DateClick`, `DateDblClick`,
       `SelChange`; REQ-0310, corpus 214, `examples/monthview`).
 - [ ] MonthView `GetDayBold`, `HitTest`, `ComputeControlSize`, several months.
-- [ ] DTPicker (Value, Format, CustomFormat, CheckBox, UpDown, `Change`,
-      `CloseUp`, `DropDown`).
+- [x] DTPicker (Value, Format, CustomFormat, CheckBox, UpDown, `Change`,
+      `CloseUp`, `DropDown`; REQ-0311, corpus 215, `examples/dtpicker`).
+- [ ] DTPicker callback fields (`Format`, `FormatSize`, `CallbackKeyDown`) and the
+      calendar colours.
 - [ ] Animation (Open, Play, Stop, Close, AutoPlay, Center; AVI files).
 - [ ] `DllGetClassObject` creates the controls without the WFC evaluator.
 

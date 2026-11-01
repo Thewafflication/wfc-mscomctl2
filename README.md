@@ -43,6 +43,10 @@ The FlatScrollBar example (`examples/flatscrollbar`).
 
 The MonthView example (`examples/monthview`).
 
+![The DTPicker example: long date, short date with a check box, time with spin arrows, custom format](docs/images/dtpicker.png)
+
+The DTPicker example (`examples/dtpicker`).
+
 ## Roadmap, compatibility and platforms
 
 - [ROADMAP.md](ROADMAP.md): the controls to implement, in order, and the
