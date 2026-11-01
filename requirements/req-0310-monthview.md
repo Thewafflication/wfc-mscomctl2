@@ -35,13 +35,17 @@ control)
   with the range, the selection, `ShowToday`, `ShowWeekNumbers`,
   `MaxSelCount` and `StartOfWeek` of the model; choosing a date runs the same
   handling as the scripted `ui <control> select`.
-- **Scripts.** `ui <form>.<control> click|dblclick yyyy-mm-dd` and
-  `ui <form>.<control> select yyyy-mm-dd yyyy-mm-dd`.
+- **GetDayBold.** `GetDayBold(StartDate, Count, State())` is raised for each
+  stretch of days the calendar shows: `State` is a Boolean array from 0 to
+  `Count - 1`, and the days the handler sets True are bold (as with `DayBold`)
+  and the others of the stretch are not. The Win32 host asks when it shows or
+  moves the calendar (`MCS_DAYSTATE`).
+- **Scripts.** `ui <form>.<control> click|dblclick yyyy-mm-dd`, `select
+  yyyy-mm-dd yyyy-mm-dd` and `getdaybold yyyy-mm-dd count`.
 
 ## Known limits
 
-`GetDayBold`, `HitTest` and `ComputeControlSize` are in the table but do
-nothing yet; `MonthRows` and `MonthColumns` are stored (the calendar shows one
+`HitTest` and `ComputeControlSize` are in the table but do nothing yet; `MonthRows` and `MonthColumns` are stored (the calendar shows one
 month); `DateDblClick` comes only from scripts in the Win32 host; scrolling the
 calendar is not reported.
 

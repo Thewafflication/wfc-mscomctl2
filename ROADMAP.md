@@ -33,7 +33,8 @@ requirement:
 - [ ] FlatScrollBar drawn in the flat style (`Appearance`, `Arrows`).
 - [x] MonthView (Value, the date range, selections, `DateClick`, `DateDblClick`,
       `SelChange`; REQ-0310, corpus 214, `examples/monthview`).
-- [ ] MonthView `GetDayBold`, `HitTest`, `ComputeControlSize`, several months.
+- [x] MonthView `GetDayBold` (corpus 218).
+- [ ] MonthView `HitTest`, `ComputeControlSize`, several months.
 - [x] DTPicker (Value, Format, CustomFormat, CheckBox, UpDown, `Change`,
       `CloseUp`, `DropDown`; REQ-0311, corpus 215, `examples/dtpicker`).
 - [ ] DTPicker callback fields (`Format`, `FormatSize`, `CallbackKeyDown`) and the

@@ -546,9 +546,56 @@ namespace {
            raise_event(in, self, "DateDblClick", {month_date_value(start)});
 }
 
+// The calendar shows `count` days from `start`: GetDayBold(StartDate, Count,
+// State()) runs with State a Boolean array (0 to Count - 1) and the days it
+// sets are bold from then on, the others of that stretch are not.
+[[nodiscard]] bool month_get_day_bold(Interpreter& in, ControlObject& self,
+                                      const double start, const long count) {
+    if (count < 1 || count > 400) {
+        return true;
+    }
+    ArrayValue state;
+    state.lower_bound = 0;
+    state.elements.assign(static_cast<std::size_t>(count), Value{false});
+    state.element_type_index = Value{false}.index();
+    std::vector<Value> arguments{month_date_value(start),
+                                 Value{static_cast<Int16>(count)},
+                                 Value{std::move(state)}};
+    const auto form = self.form.lock();
+    if (form == nullptr ||
+        !FormSupport::raise(in, *form, self.name, self.index, "getdaybold",
+                            arguments, FormSupport::offset_of(in))) {
+        return false;
+    }
+    const auto* result = std::get_if<ArrayValue>(&arguments[2]);
+    if (result == nullptr) {
+        return true;
+    }
+    auto& bold = month_state(self).bold;
+    const std::set<long> before = bold;
+    for (long at = 0; at < count; ++at) {
+        const long day = static_cast<long>(start) + at;
+        if (static_cast<std::size_t>(at) < result->elements.size() &&
+            month_truthy(result->elements[static_cast<std::size_t>(at)])) {
+            bold.insert(day);
+        } else {
+            bold.erase(day);
+        }
+    }
+    if (bold != before) {
+        // The request came from the host, which still has the old days.
+        const bool echoed = self.comctl != nullptr && self.comctl->from_host;
+        ComctlSupport::from_host(self, false);
+        comctl_push(in, self);
+        ComctlSupport::from_host(self, echoed);
+    }
+    return true;
+}
+
 }  // namespace
 
-// Scripted input: `click|dblclick yyyy-mm-dd`, `select yyyy-mm-dd yyyy-mm-dd`.
+// Scripted input: `click|dblclick yyyy-mm-dd`, `select yyyy-mm-dd yyyy-mm-dd`,
+// `getdaybold yyyy-mm-dd count`.
 [[nodiscard]] bool monthview_input(Interpreter& in, ControlObject& self,
                                    const std::string& action,
                                    const std::string& rest) {
@@ -560,6 +607,10 @@ namespace {
     double end = 0;
     if (!month_parse(first, start)) {
         return true;
+    }
+    if (action == "getdaybold") {
+        return month_get_day_bold(in, self, start,
+                                  second.empty() ? 0 : std::atol(second.c_str()));
     }
     if (action == "click" || action == "dblclick") {
         return month_user_select(in, self, start, start, action == "dblclick");
@@ -582,6 +633,9 @@ void monthview_snapshot(ControlObject& self, ui::CommonSnapshot& snapshot) {
     snapshot.multi_select = property_flag(self, "multiselect");
     snapshot.first_day = month_first_day(self);
     snapshot.max_select = property_whole(self, "maxselcount");
+    for (const long day : month_state(self).bold) {
+        snapshot.bold_days.push_back(static_cast<double>(day));
+    }
 }
 
 // ----- DTPicker ------------------------------------------------------------------
