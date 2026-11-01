@@ -10,7 +10,7 @@ requirement series when they are written, and are listed here.
 | Control | API contract | Behaviour |
 | --- | --- | --- |
 | UpDown | the type library | [REQ-0308](req-0308-updown.md) |
-| FlatScrollBar | planned | planned |
+| FlatScrollBar | the type library | [REQ-0309](req-0309-flatscrollbar.md) |
 | MonthView | planned | planned |
 | DTPicker | planned | planned |
 | Animation | planned | planned |

@@ -1,0 +1,5 @@
+scroll Flat1 70
+scrollby Flat1 -5
+scroll Flat2 99999
+scroll Flat1 70
+close Form1

@@ -28,8 +28,9 @@ requirement:
 - [x] UpDown (Value, Min, Max, Increment, Wrap, Orientation, `Change`,
       `UpClick`, `DownClick`; REQ-0308, corpus 211, `examples/updown`).
 - [ ] UpDown buddy: `BuddyControl`, `BuddyProperty`, `SyncBuddy`, `AutoBuddy`.
-- [ ] FlatScrollBar (Min, Max, Value, LargeChange, SmallChange, Orientation,
-      `Change`, `Scroll`).
+- [x] FlatScrollBar (Min, Max, Value, LargeChange, SmallChange, Orientation,
+      `Change`, `Scroll`; REQ-0309, corpus 212, `examples/flatscrollbar`).
+- [ ] FlatScrollBar drawn in the flat style (`Appearance`, `Arrows`).
 - [ ] MonthView (Value, the date range, selections, `DateClick`, `DateDblClick`,
       `GetDayBold`, `SelChange`).
 - [ ] DTPicker (Value, Format, CustomFormat, CheckBox, UpDown, `Change`,

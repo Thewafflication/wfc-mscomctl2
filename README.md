@@ -35,6 +35,10 @@ Target: `wfc_mscomctl2` (static library, or `wfcmscomctl2.dll` with
 The UpDown example (`examples/updown`), run with
 `wfc run examples/updown/updown.vbp --gui`.
 
+![The FlatScrollBar example: a horizontal and a vertical FlatScrollBar](docs/images/flatscrollbar.png)
+
+The FlatScrollBar example (`examples/flatscrollbar`).
+
 ## Roadmap, compatibility and platforms
 
 - [ROADMAP.md](ROADMAP.md): the controls to implement, in order, and the

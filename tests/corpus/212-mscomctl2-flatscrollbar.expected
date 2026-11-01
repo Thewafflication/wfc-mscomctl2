@@ -1,0 +1,10 @@
+start 20  10  100  32767  10  1  0  1 
+ 380 Invalid property value
+change 50 
+FlatScrollBar 50 
+scroll 70 
+change 70 
+change 65 
+change2 32767 
+scroll 70 
+change 70 
