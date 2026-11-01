@@ -47,6 +47,10 @@ The MonthView example (`examples/monthview`).
 
 The DTPicker example (`examples/dtpicker`).
 
+![The Animation example: a clip playing in the control](docs/images/animation.png)
+
+The Animation example (`examples/animation`).
+
 ## Roadmap, compatibility and platforms
 
 - [ROADMAP.md](ROADMAP.md): the controls to implement, in order, and the

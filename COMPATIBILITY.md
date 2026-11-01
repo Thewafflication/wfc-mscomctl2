@@ -27,7 +27,7 @@ dispatch id.
 | FlatScrollBar | Implemented ([REQ-0309](requirements/req-0309-flatscrollbar.md)): behaves as the intrinsic scroll bars (range, `Change`, `Scroll`, both orientations) on a system scroll bar; `Appearance` and `Arrows` are stored, the flat style is not drawn yet. |
 | MonthView | Implemented ([REQ-0310](requirements/req-0310-monthview.md)): `Value` and its parts, `MinDate`/`MaxDate`, `MultiSelect` with `MaxSelCount`, `VisibleDays`, `DayBold`, `SelChange` (with `Cancel`), `DateClick`, `DateDblClick`, the system month calendar. `GetDayBold`, `HitTest` and `ComputeControlSize` do nothing yet. |
 | DTPicker | Implemented ([REQ-0311](requirements/req-0311-dtpicker.md)): `Value` (a Date or Null) and its parts, `MinDate`/`MaxDate`, `Format`, `CustomFormat`, `CheckBox`, `UpDown`, `Change`, `DropDown`, `CloseUp`, the system date-time picker. The callback events (`Format`, `FormatSize`, `CallbackKeyDown`) are not raised. |
-| Animation | None yet: a form that contains one is refused as an unsupported control. |
+| Animation | Implemented ([REQ-0312](requirements/req-0312-animation.md)): `Open` (53 and 5 errors), `Play`, `Stop`, `Close`, `AutoPlay`, `Center`, `BackStyle`, `Click`, `DblClick`, the system animation control. |
 
 The behaviour follows the documented controls; there is no reference probe of
 the Microsoft ones yet. The order is in [ROADMAP.md](ROADMAP.md).

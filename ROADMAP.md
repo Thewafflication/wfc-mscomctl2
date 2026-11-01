@@ -38,7 +38,8 @@ requirement:
       `CloseUp`, `DropDown`; REQ-0311, corpus 215, `examples/dtpicker`).
 - [ ] DTPicker callback fields (`Format`, `FormatSize`, `CallbackKeyDown`) and the
       calendar colours.
-- [ ] Animation (Open, Play, Stop, Close, AutoPlay, Center; AVI files).
+- [x] Animation (Open, Play, Stop, Close, AutoPlay, Center; AVI files; REQ-0312,
+      corpus 217, `examples/animation`).
 - [ ] `DllGetClassObject` creates the controls without the WFC evaluator.
 
 ## 0.8: Microsoft ids verified

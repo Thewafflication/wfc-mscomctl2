@@ -13,4 +13,4 @@ requirement series when they are written, and are listed here.
 | FlatScrollBar | the type library | [REQ-0309](req-0309-flatscrollbar.md) |
 | MonthView | the type library | [REQ-0310](req-0310-monthview.md) |
 | DTPicker | the type library | [REQ-0311](req-0311-dtpicker.md) |
-| Animation | planned | planned |
+| Animation | the type library | [REQ-0312](req-0312-animation.md) |

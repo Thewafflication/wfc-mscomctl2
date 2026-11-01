@@ -877,3 +877,94 @@ void dtpicker_snapshot(ControlObject& self, ui::CommonSnapshot& snapshot) {
     snapshot.checkboxes = property_flag(self, "checkbox");
     snapshot.select_range = picker_is_null(self);  // the box is cleared
 }
+
+// ----- Animation -----------------------------------------------------------------
+//
+// Plays a silent AVI clip. Open(file) loads it (53 when the file does not
+// exist, 5 when it is not an AVI file); with AutoPlay it starts at once.
+// Play(RepeatCount, StartFrame, EndFrame) starts it (RepeatCount -1, the
+// default, repeats for ever; frames count from 0 and EndFrame -1 is the last),
+// Stop halts it and Close unloads the file. Click and DblClick are the
+// ordinary mouse events. Center and BackStyle only change how the clip is
+// drawn. The behaviour follows the documented control; there is no reference
+// probe.
+
+namespace {
+
+// 0 when `path` is an existing file that starts like an AVI file, else the
+// error to raise.
+[[nodiscard]] Integer animation_check(const std::string& path) {
+    std::ifstream file(path, std::ios::binary);
+    if (!file.good()) {
+        return 53;
+    }
+    char head[12] = {};
+    file.read(head, sizeof(head));
+    if (file.gcount() < 12 || std::memcmp(head, "RIFF", 4) != 0 ||
+        std::memcmp(head + 8, "AVI ", 4) != 0) {
+        return 5;
+    }
+    return 0;
+}
+
+void animation_host(Interpreter& in, ControlObject& self,
+                    const std::string& action, const std::string& path,
+                    const long repeat, const long first, const long last) {
+    if (self.window != ui::kNoWindow) {
+        FormSupport::runtime(in).host->animate(self.window, action, path,
+                                               repeat, first, last);
+    }
+}
+
+}  // namespace
+
+// The methods of the control (called like read members).
+[[nodiscard]] bool animation_get(Interpreter& in, ControlObject& self,
+                                 const std::string& member,
+                                 std::vector<CallArgument>& arguments,
+                                 Value& result, NativeFailure& failure) {
+    if (member == "open") {
+        const std::string path =
+            arguments.empty() ? std::string{}
+                              : FormSupport::text_of(arguments[0].value);
+        result = Value{Empty{}};
+        if (const Integer problem = animation_check(path); problem != 0) {
+            failure = NativeFailure{
+                problem, problem == 53 ? "File not found"
+                                       : "Invalid procedure call or argument"};
+            return true;
+        }
+        self.values["_file"] = Value{path};
+        self.values["_playing"] = Value{false};
+        animation_host(in, self, "open", path, 0, 0, 0);
+        if (property_flag(self, "autoplay")) {
+            self.values["_playing"] = Value{true};
+            animation_host(in, self, "play", path, -1, 0, -1);
+        }
+        return true;
+    }
+    if (member == "play" || member == "stop" || member == "close") {
+        result = Value{Empty{}};
+        if (member == "close") {
+            self.values.erase("_file");
+            self.values["_playing"] = Value{false};
+            animation_host(in, self, "close", "", 0, 0, 0);
+        } else if (member == "stop") {
+            self.values["_playing"] = Value{false};
+            animation_host(in, self, "stop", "", 0, 0, 0);
+        } else if (self.values.contains("_file")) {
+            const auto number = [&](const std::size_t at, const long fallback) {
+                return at < arguments.size() && !arguments[at].omitted &&
+                               !std::holds_alternative<Empty>(
+                                   arguments[at].value)
+                           ? static_cast<long>(as_double(arguments[at].value))
+                           : fallback;
+            };
+            self.values["_playing"] = Value{true};
+            animation_host(in, self, "play", "", number(0, -1), number(1, 0),
+                           number(2, -1));
+        }
+        return true;
+    }
+    return false;
+}
