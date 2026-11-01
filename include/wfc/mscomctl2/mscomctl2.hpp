@@ -1,5 +1,5 @@
-// The member table of the Windows Common Controls-2 (mscomct2.ocx, library MSComCtl2).
-// Internal to the WFC runtime; not part of the public API.
+// The member table of the Windows Common Controls-2 (mscomct2.ocx, library
+// MSComCtl2). Internal to the WFC runtime; not part of the public API.
 //
 // The table is plain data. It is linked statically into the program or, when
 // the library is built shared (WFC_MSCOMCTL2_SHARED), loaded from
@@ -24,8 +24,10 @@
 
 namespace wfc::ui {
 
-// The classes of the library: Animation, UpDown, MonthView, DTPicker, FlatScrollBar.
-[[nodiscard]] WFC_MSCOMCTL2_API std::span<const ControlClass> mscomctl2_classes();
+// The classes of the library: Animation, UpDown, MonthView, DTPicker,
+// FlatScrollBar.
+[[nodiscard]] WFC_MSCOMCTL2_API std::span<const ControlClass>
+mscomctl2_classes();
 
 }  // namespace wfc::ui
 

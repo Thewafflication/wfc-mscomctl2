@@ -1,9 +1,10 @@
 # wfc-mscomctl2: Windows Common Controls-2 (mscomct2.ocx, library MSComCtl2).
 #
-# The member table is generated from the type-library evidence (scripts/New-UiControlTables.ps1 in WFC).
+# The member table is generated from the type-library evidence
+# (scripts/New-UiControlTables.ps1 in WFC).
 # The table is built static by default; WFC_MSCOMCTL2_SHARED builds it as
-# wfcmscomctl2.dll so a program can load it at run time instead. The version is the
-# one in VERSION and is stamped into the DLL's version resource.
+# wfcmscomctl2.dll so a program can load it at run time instead. The version is
+# the one in VERSION and is stamped into the DLL's version resource.
 #
 # Parent project variables used when present: WFC_OCX_SHARED (the default of
 # WFC_MSCOMCTL2_SHARED) and the functions wfc_enable_strict_warnings and
@@ -89,7 +90,10 @@ if(WFC_MSCOMCTL2_SHARED AND WIN32)
     src/wfcmscomctl2.def
     "${CMAKE_CURRENT_BINARY_DIR}/wfcmscomctl2.rc"
   )
-  target_include_directories(wfc_mscomctl2 PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+  target_include_directories(
+    wfc_mscomctl2
+    PRIVATE "${CMAKE_CURRENT_BINARY_DIR}"
+  )
   target_link_libraries(wfc_mscomctl2 PRIVATE advapi32)
   target_compile_definitions(
     wfc_mscomctl2
@@ -105,7 +109,10 @@ if(WFC_MSCOMCTL2_SHARED AND WIN32)
   )
 else()
   add_library(wfc_mscomctl2 STATIC ${WFC_MSCOMCTL2_SOURCES})
-  set_target_properties(wfc_mscomctl2 PROPERTIES OUTPUT_NAME wfcmscomctl2_static)
+  set_target_properties(
+    wfc_mscomctl2
+    PROPERTIES OUTPUT_NAME wfcmscomctl2_static
+  )
 endif()
 target_include_directories(
   wfc_mscomctl2
@@ -162,8 +169,8 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     add_test(
       NAME TC-MP0010-mscomctl2-dll
       COMMAND
-        mscomctl2_dll_test "$<TARGET_FILE:wfc_mscomctl2>" "${WFC_MSCOMCTL2_VERSION}"
-        "${WFC_LIB_TARGET}"
+        mscomctl2_dll_test "$<TARGET_FILE:wfc_mscomctl2>"
+        "${WFC_MSCOMCTL2_VERSION}" "${WFC_LIB_TARGET}"
     )
     set_tests_properties(
       TC-MP0010-mscomctl2-dll
@@ -180,7 +187,11 @@ endif()
 # the classes (web/index.html); CI opens the page in Chromium for the README
 # screenshot.
 if(EMSCRIPTEN)
-  file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/TARGET" WFC_WEB_TARGET LIMIT_COUNT 1)
+  file(
+    STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/TARGET"
+    WFC_WEB_TARGET
+    LIMIT_COUNT 1
+  )
   add_executable(mscomctl2_web web/wasm_api.cpp)
   target_link_libraries(mscomctl2_web PRIVATE wfc_mscomctl2)
   target_compile_features(mscomctl2_web PRIVATE cxx_std_20)
@@ -190,13 +201,29 @@ if(EMSCRIPTEN)
       WFC_WEB_VERSION="${WFC_MSCOMCTL2_VERSION}"
       WFC_WEB_TARGET="${WFC_WEB_TARGET}"
   )
-  set_target_properties(mscomctl2_web PROPERTIES OUTPUT_NAME mscomctl2 SUFFIX .js)
+  set_target_properties(
+    mscomctl2_web
+    PROPERTIES OUTPUT_NAME mscomctl2 SUFFIX .js
+  )
+  set(
+    WFC_WEB_NAMES
+    library_name
+    library_version
+    library_target
+    class_count
+    class_name
+    member_count
+    event_count
+    member_name
+    event_name
+  )
+  string(JOIN "','_" WFC_WEB_EXPORTS ${WFC_WEB_NAMES})
   target_link_options(
     mscomctl2_web
     PRIVATE
       -sMODULARIZE=1
       -sEXPORT_NAME=create_mscomctl2
-      "-sEXPORTED_FUNCTIONS=['_library_name','_library_version','_library_target','_class_count','_class_name','_member_count','_event_count','_member_name','_event_name']"
+      "-sEXPORTED_FUNCTIONS=['_${WFC_WEB_EXPORTS}']"
       "-sEXPORTED_RUNTIME_METHODS=['ccall','UTF8ToString']"
       -sENVIRONMENT=web,node
   )
