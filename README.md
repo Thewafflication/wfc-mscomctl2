@@ -39,6 +39,10 @@ The UpDown example (`examples/updown`), run with
 
 The FlatScrollBar example (`examples/flatscrollbar`).
 
+![The MonthView example: a calendar with week numbers and a bold day](docs/images/monthview.png)
+
+The MonthView example (`examples/monthview`).
+
 ## Roadmap, compatibility and platforms
 
 - [ROADMAP.md](ROADMAP.md): the controls to implement, in order, and the

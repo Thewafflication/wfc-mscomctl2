@@ -1,0 +1,7 @@
+ui Form1.Month1 click 2027-06-20
+ui Form1.Month1 click 2027-06-20
+ui Form1.Month1 click 2027-07-04
+ui Form1.Month1 dblclick 2027-07-05
+ui Form1.Month2 select 2026-10-14 2026-10-16
+ui Form1.Month2 select 2026-10-14 2026-10-20
+close Form1

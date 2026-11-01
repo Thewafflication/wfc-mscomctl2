@@ -11,6 +11,6 @@ requirement series when they are written, and are listed here.
 | --- | --- | --- |
 | UpDown | the type library | [REQ-0308](req-0308-updown.md) |
 | FlatScrollBar | the type library | [REQ-0309](req-0309-flatscrollbar.md) |
-| MonthView | planned | planned |
+| MonthView | the type library | [REQ-0310](req-0310-monthview.md) |
 | DTPicker | planned | planned |
 | Animation | planned | planned |
