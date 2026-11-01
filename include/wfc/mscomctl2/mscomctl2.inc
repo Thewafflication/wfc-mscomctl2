@@ -356,9 +356,46 @@ void month_select_one(ControlObject& self, const double serial) {
                                  const std::string& member,
                                  std::vector<CallArgument>& arguments,
                                  Value& result, NativeFailure& failure) {
-    static_cast<void>(in);
     const double value = month_value(self);
     const auto parts = split_date(value);
+    if (member == "hittest" || member == "computecontrolsize") {
+        // HitTest(x, y, Date) in pixels gives the area (MonthViewHitTestAreas)
+        // and sets Date; ComputeControlSize(Rows, Columns, Width, Height) sets
+        // Width and Height (twips) from the system calendar.
+        const auto number = [&](const std::size_t at) {
+            return at < arguments.size() ? as_double(arguments[at].value) : 0.0;
+        };
+        const auto give = [&](const std::size_t at, Value output) {
+            if (at < arguments.size() && arguments[at].byref_target != nullptr) {
+                *arguments[at].byref_target = std::move(output);
+            }
+        };
+        auto* host = self.window != ui::kNoWindow
+                         ? FormSupport::runtime(in).host.get()
+                         : nullptr;
+        if (member == "hittest") {
+            long area = 6;  // mvwNoWhere
+            double date = value;
+            if (host != nullptr &&
+                host->month_hit(self.window, static_cast<long>(number(0)),
+                                static_cast<long>(number(1)), area, date) &&
+                area != 6) {
+                give(2, month_date_value(date));
+            }
+            result = Value{static_cast<Int16>(area)};
+        } else {
+            double width = 0;
+            double height = 0;
+            if (host != nullptr) {
+                host->month_size(self.window, static_cast<long>(number(0)),
+                                 static_cast<long>(number(1)), width, height);
+            }
+            give(2, Value{static_cast<float>(width)});
+            give(3, Value{static_cast<float>(height)});
+            result = Value{Empty{}};
+        }
+        return true;
+    }
     if (member == "value") {
         result = month_date_value(value);
     } else if (member == "selstart") {

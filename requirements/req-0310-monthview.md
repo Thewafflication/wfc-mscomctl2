@@ -40,12 +40,21 @@ control)
   `Count - 1`, and the days the handler sets True are bold (as with `DayBold`)
   and the others of the stretch are not. The Win32 host asks when it shows or
   moves the calendar (`MCS_DAYSTATE`).
+- **HitTest, ComputeControlSize.** `HitTest(x, y, Date)` (pixels, in the
+  control) returns the area (`mvwCalendarBack` 0, `mvwCalendarDate` 1,
+  `mvwCalendarDateNext` 2, `mvwCalendarDatePrev` 3, `mvwCalendarDay` 4,
+  `mvwCalendarWeekNum` 5, `mvwNoWhere` 6, `mvwTitleBack` 7, `mvwTitleBtnNext` 8,
+  `mvwTitleBtnPrev` 9, `mvwTitleMonth` 10, `mvwTitleYear` 11, `mvwTodayLink`
+  12; the values of the installed type library) and sets `Date` when it is on a
+  date. `ComputeControlSize(Rows, Columns, Width, Height)` sets the size in
+  twips of that many months. Both ask the system calendar; without a window
+  (scripts) `HitTest` is `mvwNoWhere` and the size is 0.
 - **Scripts.** `ui <form>.<control> click|dblclick yyyy-mm-dd`, `select
   yyyy-mm-dd yyyy-mm-dd` and `getdaybold yyyy-mm-dd count`.
 
 ## Known limits
 
-`HitTest` and `ComputeControlSize` are in the table but do nothing yet; `MonthRows` and `MonthColumns` are stored (the calendar shows one
+ `MonthRows` and `MonthColumns` are stored (the calendar shows one
 month); `DateDblClick` comes only from scripts in the Win32 host; scrolling the
 calendar is not reported.
 

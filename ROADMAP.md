@@ -34,7 +34,8 @@ requirement:
 - [x] MonthView (Value, the date range, selections, `DateClick`, `DateDblClick`,
       `SelChange`; REQ-0310, corpus 214, `examples/monthview`).
 - [x] MonthView `GetDayBold` (corpus 218).
-- [ ] MonthView `HitTest`, `ComputeControlSize`, several months.
+- [x] MonthView `HitTest`, `ComputeControlSize` (corpus 220).
+- [ ] MonthView several months (`MonthRows`, `MonthColumns`).
 - [x] DTPicker (Value, Format, CustomFormat, CheckBox, UpDown, `Change`,
       `CloseUp`, `DropDown`; REQ-0311, corpus 215, `examples/dtpicker`).
 - [x] DTPicker callback fields (`Format`, `FormatSize`, `CallbackKeyDown`; corpus
