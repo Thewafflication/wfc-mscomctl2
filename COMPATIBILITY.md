@@ -21,9 +21,13 @@ dispatch id.
 
 ## Behaviour
 
-**None yet.** The evaluator of WFC does not create these controls: a form that
-contains one is refused as an unsupported control. The behaviour is planned in
-[ROADMAP.md](ROADMAP.md), one control at a time.
+| Control | Status |
+| --- | --- |
+| UpDown | Implemented ([REQ-0308](requirements/req-0308-updown.md)): defaults, range and `Change`, `UpClick`/`DownClick`, `Increment`, `Wrap`, both orientations, the Win32 up-down control. The buddy (`BuddyControl`, `SyncBuddy`) is stored, not kept in step yet. |
+| FlatScrollBar, MonthView, DTPicker, Animation | None yet: a form that contains one is refused as an unsupported control. |
+
+The behaviour follows the documented controls; there is no reference probe of
+the Microsoft ones yet. The order is in [ROADMAP.md](ROADMAP.md).
 
 ## Registration
 
@@ -39,5 +43,6 @@ contains one is refused as an unsupported control. The behaviour is planned in
   points and version resource, and registers and unregisters it.
 - A table test (`tests/mscomctl2_tables_test.cpp`) checks the five classes and
   their member kinds.
+- The corpus program `211-mscomctl2-updown` (run by WFC) tests the UpDown.
 - WFC compares the table with the evidence
   (`TC-MP0010-mscomctl2-tables-current`).

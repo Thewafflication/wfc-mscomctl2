@@ -17,8 +17,9 @@ What is here:
 - `include/wfc/mscomctl2/mscomctl2.hpp` the accessor
   `wfc::ui::mscomctl2_classes()`.
 - `include/wfc/mscomctl2/mscomctl2.inc` the behaviour of the controls for the
-  WFC evaluator: **not written yet** (the evaluator does not create these
-  controls; see [COMPATIBILITY.md](COMPATIBILITY.md)).
+  WFC evaluator: the **UpDown** so far (see
+  [COMPATIBILITY.md](COMPATIBILITY.md)); the other four are refused as
+  unsupported controls.
 - `include/wfc/ocx/control_class.hpp` and `registration.hpp`, identical in every
   WFC control library (a WFC test checks the copies).
 - `VERSION` and `TARGET`: the version, stamped into `wfcmscomctl2.dll`, and the
@@ -26,6 +27,13 @@ What is here:
 
 Target: `wfc_mscomctl2` (static library, or `wfcmscomctl2.dll` with
 `WFC_MSCOMCTL2_SHARED=ON`; the parent default is `WFC_OCX_SHARED`).
+
+## Screenshots
+
+![The UpDown example: a vertical and a horizontal UpDown](docs/images/updown.png)
+
+The UpDown example (`examples/updown`), run with
+`wfc run examples/updown/updown.vbp --gui`.
 
 ## Roadmap, compatibility and platforms
 

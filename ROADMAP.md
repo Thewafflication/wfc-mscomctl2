@@ -25,8 +25,9 @@ an unchecked one is planned.
 One control at a time, each with a corpus program, a GUI example and a
 requirement:
 
-- [ ] UpDown (Value, Min, Max, Increment, Wrap, Orientation, the buddy control,
-      `Change`, `UpClick`, `DownClick`).
+- [x] UpDown (Value, Min, Max, Increment, Wrap, Orientation, `Change`,
+      `UpClick`, `DownClick`; REQ-0308, corpus 211, `examples/updown`).
+- [ ] UpDown buddy: `BuddyControl`, `BuddyProperty`, `SyncBuddy`, `AutoBuddy`.
 - [ ] FlatScrollBar (Min, Max, Value, LargeChange, SmallChange, Orientation,
       `Change`, `Scroll`).
 - [ ] MonthView (Value, the date range, selections, `DateClick`, `DateDblClick`,
