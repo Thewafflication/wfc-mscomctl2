@@ -54,7 +54,7 @@ control)
 
 ## Known limits
 
- `MonthRows` and `MonthColumns` are stored (the calendar shows one
+`MonthRows` and `MonthColumns` are stored (the calendar shows one
 month); `DateDblClick` comes only from scripts in the Win32 host; scrolling the
 calendar is not reported.
 

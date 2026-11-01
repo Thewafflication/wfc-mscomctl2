@@ -659,6 +659,22 @@ namespace {
 }
 
 // What the host draws: the dates, the range and how the calendar is shown.
+// The colours of a calendar set in the form or by code: the property names of
+// the control with the MCSC_* index of each (background 0, text 1, title
+// background 2, title text 3, month background 4, trailing text 5).
+void calendar_colors(ControlObject& self,
+                     std::initializer_list<std::pair<const char*, int>> names,
+                     ui::CommonSnapshot& snapshot) {
+    for (const auto& [name, index] : names) {
+        const auto found = self.values.find(name);
+        if (found != self.values.end() &&
+            !std::holds_alternative<std::string>(found->second)) {
+            snapshot.calendar_colors.emplace_back(
+                index, static_cast<long>(as_double(found->second)));
+        }
+    }
+}
+
 void monthview_snapshot(ControlObject& self, ui::CommonSnapshot& snapshot) {
     snapshot.date_value = month_value(self);
     snapshot.date_start = month_sel_start(self);
@@ -670,6 +686,14 @@ void monthview_snapshot(ControlObject& self, ui::CommonSnapshot& snapshot) {
     snapshot.multi_select = property_flag(self, "multiselect");
     snapshot.first_day = month_first_day(self);
     snapshot.max_select = property_whole(self, "maxselcount");
+    calendar_colors(self,
+                    {{"backcolor", 0},
+                     {"forecolor", 1},
+                     {"titlebackcolor", 2},
+                     {"titleforecolor", 3},
+                     {"monthbackcolor", 4},
+                     {"trailingforecolor", 5}},
+                    snapshot);
     for (const long day : month_state(self).bold) {
         snapshot.bold_days.push_back(static_cast<double>(day));
     }
@@ -1053,6 +1077,13 @@ void picker_push(Interpreter& in, ControlObject& self) {
 
 // What the host draws.
 void dtpicker_snapshot(ControlObject& self, ui::CommonSnapshot& snapshot) {
+    calendar_colors(self,
+                    {{"calendarforecolor", 1},
+                     {"calendartitlebackcolor", 2},
+                     {"calendartitleforecolor", 3},
+                     {"calendarbackcolor", 4},
+                     {"calendartrailingforecolor", 5}},
+                    snapshot);
     snapshot.date_value = picker_is_null(self) ? 0.0 : picker_value(self);
     snapshot.date_min = month_date_of(self, "mindate", month_first_date());
     snapshot.date_max = month_date_of(self, "maxdate", month_last_date());

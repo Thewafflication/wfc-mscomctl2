@@ -42,6 +42,12 @@ control)
   `CallbackField` is the whole run (`XX`). The Win32 host answers from the last
   answers of the program and asks again (events run after the notification), so
   the first drawing can lack the text.
+- **Colours.** `CalendarBackColor` (the month), `CalendarForeColor`,
+  `CalendarTitleBackColor`, `CalendarTitleForeColor` and
+  `CalendarTrailingForeColor` colour the drop-down calendar when they are set
+  (`DTM_SETMCCOLOR`); the MonthView has `BackColor`, `ForeColor`,
+  `MonthBackColor`, `TitleBackColor`, `TitleForeColor` and `TrailingForeColor`
+  (`MCM_SETCOLOR`). Colours are OLE colours (system colours have the high bit).
 - **Win32 host.** The control is the system date and time picker
   (`SysDateTimePick32`) with the value, the range, the format and the check
   box of the model; its notifications run the same handling as the scripted
@@ -52,8 +58,7 @@ control)
 
 ## Known limits
 
-The calendar colours are stored and not applied to the drop-down calendar. In
-the Win32 host the text of a callback field does not show in the screenshots
+In the Win32 host the text of a callback field does not show in the screenshots
 made here (the model, the answers and the widths reach the control; whether the
 system control paints them is not verified).
 
