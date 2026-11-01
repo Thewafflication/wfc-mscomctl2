@@ -874,7 +874,47 @@ namespace {
     return false;
 }
 
+namespace {
+
+// What the program's callback events gave for each callback field: the text
+// (Format) and the width (FormatSize).
+struct PickerState final : OcxState {
+    std::map<std::string, std::pair<std::string, long>> fields;
+};
+
+[[nodiscard]] PickerState& picker_state(ControlObject& self) {
+    auto& slot = state_of(self).ocx;
+    if (slot == nullptr) {
+        slot = std::make_shared<PickerState>();
+    }
+    return static_cast<PickerState&>(*slot);
+}
+
+// Format(CallbackField, FormattedString), FormatSize(CallbackField, Size) and
+// CallbackKeyDown(KeyCode, Shift, CallbackField, CallbackDate): the program
+// answers through the By-Ref arguments.
+[[nodiscard]] bool picker_callback(Interpreter& in, ControlObject& self,
+                                   const std::string& event,
+                                   std::vector<Value>& arguments) {
+    const auto form = self.form.lock();
+    return form == nullptr ||
+           FormSupport::raise(in, *form, self.name, self.index, event,
+                              arguments, FormSupport::offset_of(in));
+}
+
+// Pushes the new answers to the host, which asked from its notification.
+void picker_push(Interpreter& in, ControlObject& self) {
+    const bool echoed = self.comctl != nullptr && self.comctl->from_host;
+    ComctlSupport::from_host(self, false);
+    comctl_push(in, self);
+    ComctlSupport::from_host(self, echoed);
+}
+
+}  // namespace
+
 // Scripted input: the user picks a value, ticks the box, opens the calendar.
+// The host also sends `format <field> <date> <time>`, `formatsize <field>` and
+// `keydown <field> <key> <shift> <date> <time>` for the callback fields.
 [[nodiscard]] bool dtpicker_input(Interpreter& in, ControlObject& self,
                                   const std::string& action,
                                   const std::string& rest) {
@@ -884,6 +924,59 @@ namespace {
     words >> first >> second;
     if (action == "dropdown") {
         return raise_event(in, self, "DropDown", {});
+    }
+    if (action == "format") {
+        std::vector<Value> arguments{Value{first}, Value{std::string{}}};
+        if (!picker_callback(in, self, "format", arguments)) {
+            return false;
+        }
+        auto& slot = picker_state(self).fields[first];
+        const std::string text = FormSupport::text_of(arguments[1]);
+        if (text != slot.first) {
+            slot.first = text;
+            picker_push(in, self);
+        }
+        return true;
+    }
+    if (action == "formatsize") {
+        std::vector<Value> arguments{Value{first},
+                                     Value{static_cast<Int16>(0)}};
+        if (!picker_callback(in, self, "formatsize", arguments)) {
+            return false;
+        }
+        auto& slot = picker_state(self).fields[first];
+        const long size = static_cast<long>(as_double(arguments[1]));
+        if (size != slot.second) {
+            slot.second = size;
+            picker_push(in, self);
+        }
+        return true;
+    }
+    if (action == "keydown") {
+        std::string key;
+        std::string shift;
+        std::string time;
+        words.clear();
+        words.str(rest);
+        words >> first >> key >> shift >> second >> time;
+        double serial = 0;
+        if (!picker_parse(second, time, serial)) {
+            return true;
+        }
+        std::vector<Value> arguments{
+            Value{static_cast<Int16>(std::atol(key.c_str()))},
+            Value{static_cast<Int16>(std::atol(shift.c_str()))}, Value{first},
+            month_date_value(serial)};
+        if (!picker_callback(in, self, "callbackkeydown", arguments)) {
+            return false;
+        }
+        const auto* date = std::get_if<DateValue>(&arguments[3]);
+        if (date != nullptr && date->serial != serial &&
+            picker_in_range(self, date->serial)) {
+            self.values["value"] = month_date_value(date->serial);
+            return raise_event(in, self, "Change", {});
+        }
+        return true;
     }
     if (action == "closeup") {
         return raise_event(in, self, "CloseUp", {});
@@ -930,6 +1023,13 @@ void dtpicker_snapshot(ControlObject& self, ui::CommonSnapshot& snapshot) {
     snapshot.text = property_text(self, "customformat");
     snapshot.checkboxes = property_flag(self, "checkbox");
     snapshot.select_range = picker_is_null(self);  // the box is cleared
+    for (const auto& [field, answer] : picker_state(self).fields) {
+        ui::CommonItem item;
+        item.text = field;
+        item.key = answer.first;
+        item.width = answer.second;
+        snapshot.items.push_back(item);
+    }
 }
 
 // ----- Animation -----------------------------------------------------------------

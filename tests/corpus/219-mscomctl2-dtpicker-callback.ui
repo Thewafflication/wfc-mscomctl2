@@ -1,0 +1,5 @@
+ui Form1.DTPicker1 format X 2026-10-31 12:00:00
+ui Form1.DTPicker1 formatsize X
+ui Form1.DTPicker1 keydown X 38 0 2026-10-31 12:00:00
+ui Form1.DTPicker1 keydown X 40 0 2026-11-07 12:00:00
+close Form1

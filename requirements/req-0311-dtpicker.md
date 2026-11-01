@@ -34,18 +34,28 @@ control)
 - **Events.** `Change` is raised when `Value` changes, by code or by the user
   (and when the box is ticked or cleared); `DropDown` and `CloseUp` bracket the
   calendar.
+- **Callback fields.** A run of `X` in a custom format is a callback field.
+  `Format(CallbackField, FormattedString)` gives its text,
+  `FormatSize(CallbackField, Size)` its width in pixels and
+  `CallbackKeyDown(KeyCode, Shift, CallbackField, CallbackDate)` runs when a key
+  is pressed in it (setting `CallbackDate` changes `Value`, with `Change`).
+  `CallbackField` is the whole run (`XX`). The Win32 host answers from the last
+  answers of the program and asks again (events run after the notification), so
+  the first drawing can lack the text.
 - **Win32 host.** The control is the system date and time picker
   (`SysDateTimePick32`) with the value, the range, the format and the check
   box of the model; its notifications run the same handling as the scripted
   `ui` actions.
 - **Scripts.** `ui <form>.<control> value yyyy-mm-dd[ hh:mm:ss]`,
-  `check on|off`, `dropdown` and `closeup`.
+  `check on|off`, `dropdown`, `closeup`, `format <field> <date> <time>`,
+  `formatsize <field>` and `keydown <field> <key> <shift> <date> <time>`.
 
 ## Known limits
 
-`Format`, `FormatSize` and `CallbackKeyDown` (callback fields in a custom
-format) are in the table and not raised; the calendar colours are stored and
-not applied to the drop-down calendar.
+The calendar colours are stored and not applied to the drop-down calendar. In
+the Win32 host the text of a callback field does not show in the screenshots
+made here (the model, the answers and the widths reach the control; whether the
+system control paints them is not verified).
 
 ## Verification
 

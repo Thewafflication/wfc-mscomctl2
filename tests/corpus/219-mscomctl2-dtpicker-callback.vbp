@@ -1,0 +1,5 @@
+Type=Exe
+Form=219-mscomctl2-dtpicker-callback.frm
+Object={86CF1D34-0C5F-11D2-A9FC-0000F8754DA1}#2.0#0; MSCOMCT2.OCX
+Startup="Form1"
+WfcUiScript=219-mscomctl2-dtpicker-callback.ui
