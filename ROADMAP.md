@@ -49,7 +49,10 @@ requirement:
 
 - [x] The class ids and ProgIDs come from the installed component's type
       library.
-- [ ] Registration over the Microsoft ids tested against the real component.
+- [x] The class ids, ProgIDs and server of every class match the registration
+      of the installed component (`scripts/Test-MicrosoftIds.ps1`).
+- [ ] Registration over the Microsoft ids tested against the real component
+      (the round trip is tested in the current user's registry only).
 - [ ] A program built against the Microsoft type library loads this library.
 
 ## 0.9: behaviour parity, 1.0: Microsoft parity
