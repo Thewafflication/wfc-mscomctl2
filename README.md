@@ -77,5 +77,7 @@ registry. With `WFC_REGISTER_MICROSOFT_IDS=1` the controls are also served under
 the Microsoft ProgIDs and class ids (`MSComCtl2.DTPicker.2` and so on; they
 come from the type library of the installed component, so they are checked);
 what was registered there before is saved and restored by `regsvr32 /u`. The
-library does not create the controls itself yet: `DllGetClassObject` reports
-that the class is not available.
+`DllGetClassObject` returns a class factory whose objects are late-bound
+(IDispatch) controls built from the member table: a property keeps the value
+it is given and a method is accepted, with no WFC evaluator; the behaviour of
+the controls is still implemented by the evaluator of WFC.

@@ -43,7 +43,10 @@ requirement:
 - [x] Calendar colours of MonthView and DTPicker (corpus 221).
 - [x] Animation (Open, Play, Stop, Close, AutoPlay, Center; AVI files; REQ-0312,
       corpus 217, `examples/animation`).
-- [ ] `DllGetClassObject` creates the controls without the WFC evaluator.
+- [x] `DllGetClassObject` returns a class factory; its objects are late-bound
+      (IDispatch) controls built from the member table, without the WFC
+      evaluator (`include/wfc/ocx/class_factory.hpp`, tested by
+      `wfc_check_create`). The behaviour is still the evaluator's.
 
 ## 0.8: Microsoft ids verified
 

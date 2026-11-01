@@ -94,7 +94,7 @@ if(WFC_MSCOMCTL2_SHARED AND WIN32)
     wfc_mscomctl2
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}"
   )
-  target_link_libraries(wfc_mscomctl2 PRIVATE advapi32)
+  target_link_libraries(wfc_mscomctl2 PRIVATE advapi32 ole32 oleaut32)
   target_compile_definitions(
     wfc_mscomctl2
     PUBLIC WFC_MSCOMCTL2_SHARED
