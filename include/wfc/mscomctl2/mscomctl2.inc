@@ -210,7 +210,7 @@ void comctl_form_loaded(Interpreter& in, InstanceData& form) {
 namespace {
 
 struct MonthViewState final : OcxState {
-    std::set<long> bold;
+    wfc::mscomctl2::DayBold bold;
 };
 
 [[nodiscard]] MonthViewState& month_state(ControlObject& self) {
@@ -222,11 +222,11 @@ struct MonthViewState final : OcxState {
 }
 
 [[nodiscard]] double month_first_date() {
-    return date_serial(1601, 1, 1);
+    return static_cast<double>(wfc::mscomctl2::calendar::first_date());
 }
 
 [[nodiscard]] double month_last_date() {
-    return date_serial(9999, 12, 31);
+    return static_cast<double>(wfc::mscomctl2::calendar::last_date());
 }
 
 [[nodiscard]] double month_date_of(ControlObject& self, const char* name,
@@ -240,18 +240,6 @@ struct MonthViewState final : OcxState {
     return fallback;
 }
 
-// Today's date (the local one), as a date serial.
-[[nodiscard]] double month_today() {
-    const std::time_t now = std::time(nullptr);
-    std::tm local{};
-#ifdef _WIN32
-    localtime_s(&local, &now);
-#else
-    localtime_r(&now, &local);
-#endif
-    return date_serial(local.tm_year + 1900, local.tm_mon + 1, local.tm_mday);
-}
-
 // A form file keeps the date of the control as CurrentDate (a serial).
 [[nodiscard]] double month_design_date(ControlObject& self) {
     const auto found = self.values.find("currentdate");
@@ -259,7 +247,7 @@ struct MonthViewState final : OcxState {
         !std::holds_alternative<std::string>(found->second)) {
         return std::floor(as_double(found->second));
     }
-    return month_today();
+    return static_cast<double>(wfc::mscomctl2::calendar::today());
 }
 
 [[nodiscard]] double month_value(ControlObject& self) {
@@ -306,30 +294,48 @@ struct MonthViewState final : OcxState {
     return true;
 }
 
-[[nodiscard]] bool month_in_range(ControlObject& self, const double serial) {
-    return serial >= month_min(self) && serial <= month_max(self);
+// The properties of the control as the library's model of its behaviour
+// (wfc/mscomctl2/monthview.hpp).
+[[nodiscard]] wfc::mscomctl2::MonthViewModel month_model(ControlObject& self) {
+    wfc::mscomctl2::MonthViewModel model{
+        static_cast<long>(month_value(self)),
+        static_cast<long>(month_sel_start(self)),
+        static_cast<long>(month_sel_end(self)),
+        static_cast<long>(month_min(self)), static_cast<long>(month_max(self))};
+    model.set_multi_select(property_flag(self, "multiselect"));
+    model.set_max_sel_count(property_whole(self, "maxselcount"));
+    model.set_first_day(property_whole(self, "startofweek"));
+    return model;
 }
 
-// Makes `serial` the only selected date.
-void month_select_one(ControlObject& self, const double serial) {
-    self.values["value"] = month_date_value(serial);
-    self.values["selstart"] = month_date_value(serial);
-    self.values["selend"] = month_date_value(serial);
+// Keeps what changing `member` did to the model: the member itself, and the
+// selection when it moved or `member` is one of its dates.
+void month_store(ControlObject& self,
+                 const wfc::mscomctl2::MonthViewModel& before,
+                 const wfc::mscomctl2::MonthViewModel& after,
+                 const std::string& member) {
+    if (member == "mindate" || member == "maxdate") {
+        self.values[member] = month_date_value(static_cast<double>(
+            member == "mindate" ? after.min() : after.max()));
+    }
+    const bool selection = member == "value" || member == "selstart" ||
+                           member == "selend" || member == "day" ||
+                           member == "month" || member == "year";
+    if (selection || after.value() != before.value() ||
+        after.sel_start() != before.sel_start() ||
+        after.sel_end() != before.sel_end()) {
+        self.values["value"] =
+            month_date_value(static_cast<double>(after.value()));
+        self.values["selstart"] =
+            month_date_value(static_cast<double>(after.sel_start()));
+        self.values["selend"] =
+            month_date_value(static_cast<double>(after.sel_end()));
+    }
 }
 
-// The first day of the week, 1 (Sunday) to 7. A form file stores the value
-// with flag bits above the day.
+// The first day of the week, 1 (Sunday) to 7.
 [[nodiscard]] long month_first_day(ControlObject& self) {
-    const long day = property_whole(self, "startofweek") & 0xFFFF;
-    return day >= 1 && day <= 7 ? day : 1;
-}
-
-[[nodiscard]] double month_first_visible(ControlObject& self) {
-    const auto parts = split_date(month_value(self));
-    const double first_of_month = date_serial(parts.year, parts.month, 1);
-    const long first_day = month_first_day(self);
-    const auto weekday = split_date(first_of_month).weekday;
-    return first_of_month - static_cast<double>((weekday - first_day + 7) % 7);
+    return month_model(self).first_day();
 }
 
 // A date argument as a whole serial (a Date, or a number).
@@ -354,7 +360,8 @@ void month_select_one(ControlObject& self, const double serial) {
                                  std::vector<CallArgument>& arguments,
                                  Value& result, NativeFailure& failure) {
     const double value = month_value(self);
-    const auto parts = split_date(value);
+    const auto model = month_model(self);
+    const auto parts = model.parts();
     if (member == "hittest" || member == "computecontrolsize") {
         // HitTest(x, y, Date) in pixels gives the area (MonthViewHitTestAreas)
         // and sets Date; ComputeControlSize(Rows, Columns, Width, Height) sets
@@ -413,23 +420,22 @@ void month_select_one(ControlObject& self, const double serial) {
     } else if (member == "dayofweek") {
         result = Value{static_cast<Int16>(parts.weekday)};
     } else if (member == "week") {
-        result = Value{static_cast<Int16>(
-            vb_week_of_year(value, month_first_day(self), 1))};
+        result = Value{static_cast<Int16>(model.week())};
     } else if (member == "visibledays") {
         const long index =
             arguments.empty()
                 ? 0
                 : static_cast<long>(as_double(arguments[0].value));
-        if (index < 1 || index > 42) {
+        long date = 0;
+        if (!model.visible_day(index, date)) {
             failure = NativeFailure{380, "Invalid property value"};
             return true;
         }
-        result = month_date_value(month_first_visible(self) +
-                                  static_cast<double>(index - 1));
+        result = month_date_value(static_cast<double>(date));
     } else if (member == "daybold") {
         const double day =
             arguments.empty() ? 0.0 : month_argument(arguments[0].value);
-        result = Value{month_state(self).bold.contains(static_cast<long>(day))};
+        result = Value{month_state(self).bold.is_bold(static_cast<long>(day))};
     } else {
         return false;
     }
@@ -449,11 +455,7 @@ void month_select_one(ControlObject& self, const double serial) {
             return invalid();
         }
         const long day = static_cast<long>(month_argument(arguments[0].value));
-        if (month_truthy(value)) {
-            month_state(self).bold.insert(day);
-        } else {
-            month_state(self).bold.erase(day);
-        }
+        month_state(self).bold.set(day, month_truthy(value));
         return true;
     }
     if (member == "value" || member == "selstart" || member == "selend" ||
@@ -466,44 +468,19 @@ void month_select_one(ControlObject& self, const double serial) {
         if (date == nullptr) {
             return invalid();
         }
-        const double wanted = std::floor(date->serial);
-        if (member == "mindate" || member == "maxdate") {
-            const double low = member == "mindate" ? wanted : month_min(self);
-            const double high = member == "maxdate" ? wanted : month_max(self);
-            if (low > high) {
-                return invalid();
-            }
-            self.values[member] = month_date_value(wanted);
-            const double current = month_value(self);
-            if (current < low) {
-                month_select_one(self, low);
-            } else if (current > high) {
-                month_select_one(self, high);
-            }
-            return true;
-        }
-        if (!month_in_range(self, wanted)) {
+        const long wanted = static_cast<long>(std::floor(date->serial));
+        auto model = month_model(self);
+        const auto before = model;
+        const auto outcome = member == "mindate"   ? model.set_min(wanted)
+                             : member == "maxdate" ? model.set_max(wanted)
+                             : member == "value"   ? model.set_value(wanted)
+                             : member == "selstart"
+                                 ? model.set_sel_start(wanted)
+                                 : model.set_sel_end(wanted);
+        if (!outcome.valid) {
             return invalid();
         }
-        if (member == "value" || !property_flag(self, "multiselect")) {
-            month_select_one(self, wanted);
-            return true;
-        }
-        const long most = std::max(1L, property_whole(self, "maxselcount"));
-        double start = member == "selstart" ? wanted : month_sel_start(self);
-        double end = member == "selend" ? wanted : month_sel_end(self);
-        if (member == "selstart" &&
-            (end < start || end - start + 1.0 > static_cast<double>(most))) {
-            end = start;  // a new start leaves a one-day selection
-        } else if (member == "selend" && end < start) {
-            start = end;
-        }
-        if (end - start + 1.0 > static_cast<double>(most)) {
-            return invalid();
-        }
-        self.values["selstart"] = month_date_value(start);
-        self.values["selend"] = month_date_value(end);
-        self.values["value"] = month_date_value(start);
+        month_store(self, before, model, member);
         return true;
     }
     if (member == "day" || member == "month" || member == "year") {
@@ -512,28 +489,17 @@ void month_select_one(ControlObject& self, const double serial) {
             return true;
         }
         const long number = static_cast<long>(as_double(converted));
-        const auto parts = split_date(month_value(self));
-        long year = static_cast<long>(parts.year);
-        long month = static_cast<long>(parts.month);
-        long day = static_cast<long>(parts.day);
-        if (member == "year") {
-            year = number;
-        } else if (member == "month") {
-            month = number;
-        } else {
-            day = number;
-        }
-        if (year < 1601 || year > 9999 || month < 1 || month > 12 || day < 1 ||
-            (member == "day" && day > days_in_month(year, month))) {
+        auto model = month_model(self);
+        const auto before = model;
+        const auto outcome = model.set_part(
+            member == "year"    ? wfc::mscomctl2::MonthViewModel::Part::Year
+            : member == "month" ? wfc::mscomctl2::MonthViewModel::Part::Month
+                                : wfc::mscomctl2::MonthViewModel::Part::Day,
+            number);
+        if (!outcome.valid) {
             return invalid();
         }
-        day =
-            std::min<long>(day, static_cast<long>(days_in_month(year, month)));
-        const double serial = date_serial(year, month, day);
-        if (!month_in_range(self, serial)) {
-            return invalid();
-        }
-        month_select_one(self, serial);
+        month_store(self, before, model, member);
         return true;
     }
     return false;
@@ -546,21 +512,15 @@ namespace {
 [[nodiscard]] bool month_user_select(Interpreter& in, ControlObject& self,
                                      double start, double end,
                                      const bool double_click) {
-    if (!month_in_range(self, start) || !month_in_range(self, end)) {
+    const auto model = month_model(self);
+    const auto selection =
+        model.select(static_cast<long>(start), static_cast<long>(end));
+    if (!selection.accepted) {
         return true;
     }
-    if (!property_flag(self, "multiselect")) {
-        end = start;
-    }
-    if (end < start) {
-        std::swap(start, end);
-    }
-    const long most = std::max(1L, property_whole(self, "maxselcount"));
-    if (end - start + 1.0 > static_cast<double>(most)) {
-        return true;
-    }
-    const bool changed =
-        start != month_sel_start(self) || end != month_sel_end(self);
+    start = static_cast<double>(selection.start);
+    end = static_cast<double>(selection.end);
+    const bool changed = selection.changed;
     if (changed) {
         std::vector<Value> arguments{month_date_value(start),
                                      month_date_value(end), Value{false}};
@@ -609,14 +569,14 @@ namespace {
         return true;
     }
     auto& bold = month_state(self).bold;
-    const std::set<long> before = bold;
+    const wfc::mscomctl2::DayBold before = bold;
     for (long at = 0; at < count; ++at) {
         const long day = static_cast<long>(start) + at;
         if (static_cast<std::size_t>(at) < result->elements.size() &&
             month_truthy(result->elements[static_cast<std::size_t>(at)])) {
-            bold.insert(day);
+            bold.set(day, true);
         } else {
-            bold.erase(day);
+            bold.set(day, false);
         }
     }
     if (bold != before) {
@@ -694,7 +654,7 @@ void monthview_snapshot(ControlObject& self, ui::CommonSnapshot& snapshot) {
                      {"monthbackcolor", 4},
                      {"trailingforecolor", 5}},
                     snapshot);
-    for (const long day : month_state(self).bold) {
+    for (const long day : month_state(self).bold.days()) {
         snapshot.bold_days.push_back(static_cast<double>(day));
     }
 }

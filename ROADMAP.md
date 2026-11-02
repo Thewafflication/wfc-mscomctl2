@@ -57,8 +57,15 @@ requirement:
       sink when Value changes (tested with a C sink).
 - [ ] UpDown `UpClick`/`DownClick` (they come from the window, which a COM
       object does not have yet) and the buddy through COM.
-- [ ] The other four controls' behaviour (MonthView, DTPicker, Animation,
-      FlatScrollBar), then wfc-mscomctl, wfc-comdlg32 and wfc-mswinsck.
+- [x] MonthView behaviour in the library (`monthview.hpp`: calendar
+      arithmetic, the range, selection and MultiSelect rules, the parts of
+      Value, VisibleDays, Week, bold days). The evaluator and the COM object
+      use it; `class_factory.hpp` passes the index of a parameterized
+      property (`DayBold(date)`). Tested by `monthview_test` and through COM.
+- [ ] MonthView events and the user's selection through COM (they come from
+      the window).
+- [ ] The other controls' behaviour (DTPicker, Animation, FlatScrollBar),
+      then wfc-mscomctl, wfc-comdlg32 and wfc-mswinsck.
 
 ## 0.8: Microsoft ids verified
 

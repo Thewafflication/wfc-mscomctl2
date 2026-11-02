@@ -228,6 +228,213 @@ static void wfc_check_updown(const wchar_t* dll_path) {
     printf("UpDown: the range is kept through COM\n");
 }
 
+/* Calls a member of a late-bound control. `args` are in COM order (the last
+ * argument first); a property put has the value first and is named. */
+static HRESULT wfc_call(IDispatch* control, const wchar_t* name, WORD flags,
+                        VARIANT* args, UINT count, VARIANT* result,
+                        EXCEPINFO* exception) {
+    OLECHAR* names[1];
+    DISPID id = 0;
+    DISPID named = DISPID_PROPERTYPUT;
+    DISPPARAMS params;
+    names[0] = (OLECHAR*)name;
+    if (control->lpVtbl->GetIDsOfNames(control, &IID_NULL, names, 1, 0, &id) !=
+        S_OK) {
+        return DISP_E_UNKNOWNNAME;
+    }
+    params.rgvarg = args;
+    params.cArgs = count;
+    params.rgdispidNamedArgs = (flags & DISPATCH_PROPERTYPUT) ? &named : NULL;
+    params.cNamedArgs = (flags & DISPATCH_PROPERTYPUT) ? 1 : 0;
+    return control->lpVtbl->Invoke(control, id, &IID_NULL, 0, flags, &params,
+                                   result, exception, NULL);
+}
+
+static VARIANT wfc_date(double serial) {
+    VARIANT v;
+    VariantInit(&v);
+    v.vt = VT_DATE;
+    v.date = serial;
+    return v;
+}
+
+static VARIANT wfc_bool(int flag) {
+    VARIANT v;
+    VariantInit(&v);
+    v.vt = VT_BOOL;
+    v.boolVal = flag ? VARIANT_TRUE : VARIANT_FALSE;
+    return v;
+}
+
+static VARIANT wfc_long(long number) {
+    VARIANT v;
+    VariantInit(&v);
+    v.vt = VT_I4;
+    v.lVal = number;
+    return v;
+}
+
+/* A refused property: error 380 (Invalid property value). */
+static int wfc_refused(HRESULT hr, EXCEPINFO* exception) {
+    int refused = hr == DISP_E_EXCEPTION && (exception->scode & 0xFFFF) == 380;
+    SysFreeString(exception->bstrSource);
+    SysFreeString(exception->bstrDescription);
+    memset(exception, 0, sizeof(*exception));
+    return refused;
+}
+
+static double wfc_date_of(IDispatch* control, const wchar_t* name) {
+    VARIANT result;
+    VariantInit(&result);
+    if (wfc_call(control, name, DISPATCH_PROPERTYGET, NULL, 0, &result, NULL) !=
+            S_OK ||
+        result.vt != VT_DATE) {
+        return -1;
+    }
+    return result.date;
+}
+
+static long wfc_short_of(IDispatch* control, const wchar_t* name) {
+    VARIANT result;
+    VariantInit(&result);
+    if (wfc_call(control, name, DISPATCH_PROPERTYGET, NULL, 0, &result, NULL) !=
+            S_OK ||
+        result.vt != VT_I2) {
+        return -1;
+    }
+    return result.iVal;
+}
+
+/* The behaviour of a MonthView made through COM: the parts of Value, the range
+ * and the selection rules, the bold days and the days shown. */
+static void wfc_check_monthview(const wchar_t* dll_path) {
+    typedef HRESULT(__stdcall * get_class_object)(REFCLSID, REFIID, void**);
+    HMODULE module = LoadLibraryW(dll_path);
+    get_class_object get;
+    CLSID clsid;
+    IClassFactory* factory = NULL;
+    IDispatch* control = NULL;
+    EXCEPINFO exception;
+    VARIANT args[2];
+    VARIANT result;
+    HRESULT hr;
+    if (module == NULL) {
+        wfc_check_fail("cannot load", dll_path);
+    }
+    get = (get_class_object)(void*)GetProcAddress(module, "DllGetClassObject");
+    CLSIDFromString(L"{AB9666ED-78F0-5E96-AFB3-A8667C357E80}", &clsid);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    if (get == NULL ||
+        get(&clsid, &IID_IClassFactory, (void**)&factory) != S_OK ||
+        factory->lpVtbl->CreateInstance(factory, NULL, &IID_IDispatch,
+                                        (void**)&control) != S_OK) {
+        wfc_check_fail("cannot make a MonthView in", dll_path);
+    }
+    memset(&exception, 0, sizeof(exception));
+    /* 45000 is 2023-03-15, a Wednesday. */
+    args[0] = wfc_date(45000);
+    if (wfc_call(control, L"Value", DISPATCH_PROPERTYPUT, args, 1, NULL,
+                 NULL) != S_OK) {
+        wfc_check_fail("cannot set Value in", dll_path);
+    }
+    if (wfc_short_of(control, L"Day") != 15 ||
+        wfc_short_of(control, L"Month") != 3 ||
+        wfc_short_of(control, L"Year") != 2023 ||
+        wfc_short_of(control, L"DayOfWeek") != 4) {
+        wfc_check_fail("the parts of Value are wrong in", dll_path);
+    }
+    args[0] = wfc_long(31);
+    wfc_call(control, L"Day", DISPATCH_PROPERTYPUT, args, 1, NULL, NULL);
+    args[0] = wfc_long(2);
+    if (wfc_call(control, L"Month", DISPATCH_PROPERTYPUT, args, 1, NULL,
+                 NULL) != S_OK ||
+        wfc_short_of(control, L"Day") != 28) {
+        wfc_check_fail("Month 2 did not bring Day to the month's end in",
+                       dll_path);
+    }
+    args[0] = wfc_long(13);
+    if (!wfc_refused(wfc_call(control, L"Month", DISPATCH_PROPERTYPUT, args, 1,
+                              NULL, &exception),
+                     &exception)) {
+        wfc_check_fail("Month 13 was not error 380 in", dll_path);
+    }
+    args[0] = wfc_date(45000);
+    wfc_call(control, L"Value", DISPATCH_PROPERTYPUT, args, 1, NULL, NULL);
+    args[0] = wfc_date(45010);
+    if (wfc_call(control, L"MinDate", DISPATCH_PROPERTYPUT, args, 1, NULL,
+                 NULL) != S_OK ||
+        wfc_date_of(control, L"Value") != 45010) {
+        wfc_check_fail("MinDate did not bring Value up in", dll_path);
+    }
+    args[0] = wfc_date(45000);
+    if (!wfc_refused(wfc_call(control, L"Value", DISPATCH_PROPERTYPUT, args, 1,
+                              NULL, &exception),
+                     &exception)) {
+        wfc_check_fail("Value below MinDate was not error 380 in", dll_path);
+    }
+    /* DayBold(date): the date is the index, the value comes first. */
+    args[0] = wfc_bool(1);
+    args[1] = wfc_date(45012);
+    if (wfc_call(control, L"DayBold", DISPATCH_PROPERTYPUT, args, 2, NULL,
+                 NULL) != S_OK) {
+        wfc_check_fail("cannot set DayBold in", dll_path);
+    }
+    args[0] = wfc_date(45012);
+    VariantInit(&result);
+    hr = wfc_call(control, L"DayBold", DISPATCH_PROPERTYGET, args, 1, &result,
+                  NULL);
+    if (hr != S_OK || result.vt != VT_BOOL || result.boolVal == VARIANT_FALSE) {
+        wfc_check_fail("DayBold did not keep a bold day in", dll_path);
+    }
+    args[0] = wfc_date(45013);
+    hr = wfc_call(control, L"DayBold", DISPATCH_PROPERTYGET, args, 1, &result,
+                  NULL);
+    if (hr != S_OK || result.boolVal != VARIANT_FALSE) {
+        wfc_check_fail("DayBold made another day bold in", dll_path);
+    }
+    /* VisibleDays: 1 to 42, Sunday first. March 2023 starts on a Wednesday. */
+    args[0] = wfc_long(1);
+    VariantInit(&result);
+    hr = wfc_call(control, L"VisibleDays", DISPATCH_PROPERTYGET, args, 1,
+                  &result, NULL);
+    /* Value is 45010 (2023-03-25): the calendar shows March, from 2023-02-26.
+     */
+    if (hr != S_OK || result.vt != VT_DATE || result.date != 44983) {
+        wfc_check_fail("VisibleDays(1) is wrong in", dll_path);
+    }
+    args[0] = wfc_long(43);
+    if (!wfc_refused(wfc_call(control, L"VisibleDays", DISPATCH_PROPERTYGET,
+                              args, 1, &result, &exception),
+                     &exception)) {
+        wfc_check_fail("VisibleDays(43) was not error 380 in", dll_path);
+    }
+    /* MultiSelect with MaxSelCount 3. */
+    args[0] = wfc_bool(1);
+    wfc_call(control, L"MultiSelect", DISPATCH_PROPERTYPUT, args, 1, NULL,
+             NULL);
+    args[0] = wfc_long(3);
+    wfc_call(control, L"MaxSelCount", DISPATCH_PROPERTYPUT, args, 1, NULL,
+             NULL);
+    args[0] = wfc_date(45012);
+    wfc_call(control, L"SelStart", DISPATCH_PROPERTYPUT, args, 1, NULL, NULL);
+    args[0] = wfc_date(45014);
+    if (wfc_call(control, L"SelEnd", DISPATCH_PROPERTYPUT, args, 1, NULL,
+                 NULL) != S_OK ||
+        wfc_date_of(control, L"SelEnd") != 45014) {
+        wfc_check_fail("a selection of three days was refused in", dll_path);
+    }
+    args[0] = wfc_date(45015);
+    if (!wfc_refused(wfc_call(control, L"SelEnd", DISPATCH_PROPERTYPUT, args, 1,
+                              NULL, &exception),
+                     &exception)) {
+        wfc_check_fail("a selection of four days was not error 380 in",
+                       dll_path);
+    }
+    control->lpVtbl->Release(control);
+    factory->lpVtbl->Release(factory);
+    printf("MonthView: the dates and the selection are kept through COM\n");
+}
+
 int main(int argc, char** argv) {
     int checked = wfc_check_dll(argc, argv, L"mscomctl2", kClasses,
                                 sizeof(kClasses) / sizeof(kClasses[0]));
@@ -240,5 +447,6 @@ int main(int argc, char** argv) {
         return 1;
     }
     wfc_check_updown(wfc_check_widen(argv[1]));
+    wfc_check_monthview(wfc_check_widen(argv[1]));
     return 0;
 }
