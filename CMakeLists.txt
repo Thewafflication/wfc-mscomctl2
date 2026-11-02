@@ -183,6 +183,21 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     PROPERTIES LABELS "unit;mp-0010;mscomctl2" TIMEOUT 120
   )
 
+  add_executable(mscomctl2_dtpicker_test tests/dtpicker_test.cpp)
+  target_link_libraries(mscomctl2_dtpicker_test PRIVATE wfc_mscomctl2)
+  target_compile_features(mscomctl2_dtpicker_test PRIVATE cxx_std_20)
+  if(COMMAND wfc_enable_strict_warnings)
+    wfc_enable_strict_warnings(mscomctl2_dtpicker_test)
+  endif()
+  if(COMMAND wsp_enable_hardening)
+    wsp_enable_hardening(mscomctl2_dtpicker_test)
+  endif()
+  add_test(NAME TC-MP0010-mscomctl2-dtpicker COMMAND mscomctl2_dtpicker_test)
+  set_tests_properties(
+    TC-MP0010-mscomctl2-dtpicker
+    PROPERTIES LABELS "unit;mp-0010;mscomctl2" TIMEOUT 120
+  )
+
   if(WIN32 AND WFC_MSCOMCTL2_SHARED)
     enable_language(C)
     add_executable(mscomctl2_dll_test tests/mscomctl2_dll_test.c)

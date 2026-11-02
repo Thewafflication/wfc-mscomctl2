@@ -276,21 +276,11 @@ struct MonthViewState final : OcxState {
 
 // `yyyy-mm-dd` to a date serial; false for anything else.
 [[nodiscard]] bool month_parse(const std::string& text, double& serial) {
-    char* end = nullptr;
-    const long year = std::strtol(text.c_str(), &end, 10);
-    if (*end != '-') {
+    long date = 0;
+    if (!wfc::mscomctl2::calendar::parse_date(text, date)) {
         return false;
     }
-    const long month = std::strtol(end + 1, &end, 10);
-    if (*end != '-') {
-        return false;
-    }
-    const long day = std::strtol(end + 1, &end, 10);
-    if (*end != '\0' || year < 1601 || year > 9999 || month < 1 || month > 12 ||
-        day < 1 || day > days_in_month(year, month)) {
-        return false;
-    }
-    serial = date_serial(year, month, day);
+    serial = static_cast<double>(date);
     return true;
 }
 
@@ -677,16 +667,7 @@ namespace {
 
 // Now, as a date serial with the time of day.
 [[nodiscard]] double picker_now() {
-    const std::time_t now = std::time(nullptr);
-    std::tm local{};
-#ifdef _WIN32
-    localtime_s(&local, &now);
-#else
-    localtime_r(&now, &local);
-#endif
-    return date_serial(local.tm_year + 1900, local.tm_mon + 1, local.tm_mday) +
-           (local.tm_hour * 3600.0 + local.tm_min * 60.0 + local.tm_sec) /
-               86400.0;
+    return wfc::mscomctl2::calendar::now();
 }
 
 // The date of a form file (CurrentDate, with the time as the fraction), or now.
@@ -721,33 +702,46 @@ namespace {
     return format >= 0 && format <= 3 ? format : 0;
 }
 
-[[nodiscard]] bool picker_in_range(ControlObject& self, const double serial) {
-    const double day = std::floor(serial);
-    return day >= month_date_of(self, "mindate", month_first_date()) &&
-           day <= month_date_of(self, "maxdate", month_last_date());
+// The properties of the control as the library's model of its behaviour
+// (wfc/mscomctl2/dtpicker.hpp).
+[[nodiscard]] wfc::mscomctl2::DateTimePickerModel picker_model(
+    ControlObject& self) {
+    wfc::mscomctl2::DateTimePickerModel::State state;
+    state.initial = picker_design_date(self);
+    state.value = picker_value(self);
+    state.null = picker_is_null(self);
+    state.min =
+        static_cast<long>(month_date_of(self, "mindate", month_first_date()));
+    state.max =
+        static_cast<long>(month_date_of(self, "maxdate", month_last_date()));
+    state.checkbox = property_flag(self, "checkbox");
+    const auto last = self.values.find("lastvalue");
+    if (last != self.values.end()) {
+        if (const auto* date = std::get_if<DateValue>(&last->second)) {
+            state.has_last = true;
+            state.last = date->serial;
+        }
+    }
+    return wfc::mscomctl2::DateTimePickerModel{state};
 }
 
-// `yyyy-mm-dd` with an optional ` hh:mm:ss` to a serial.
-[[nodiscard]] bool picker_parse(const std::string& date,
-                                const std::string& time, double& serial) {
-    double day = 0;
-    if (!month_parse(date, day)) {
-        return false;
-    }
-    double fraction = 0;
-    if (!time.empty()) {
-        char* end = nullptr;
-        const long hour = std::strtol(time.c_str(), &end, 10);
-        const long minute = *end == ':' ? std::strtol(end + 1, &end, 10) : 0;
-        const long second = *end == ':' ? std::strtol(end + 1, &end, 10) : 0;
-        if (hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 ||
-            second > 59) {
-            return false;
+// Keeps what changing `member` did to the model.
+void picker_store(ControlObject& self,
+                  const wfc::mscomctl2::DateTimePickerModel& before,
+                  const wfc::mscomctl2::DateTimePickerModel& after,
+                  const std::string& member) {
+    if (member == "mindate" || member == "maxdate") {
+        self.values[member] = month_date_value(static_cast<double>(
+            member == "mindate" ? after.min() : after.max()));
+        if (after.is_null() || after.value() == before.value()) {
+            return;  // the value stays as it is
         }
-        fraction = (hour * 3600.0 + minute * 60.0 + second) / 86400.0;
     }
-    serial = day + fraction;
-    return true;
+    self.values["value"] =
+        after.is_null() ? Value{Null{}} : month_date_value(after.value());
+    if (after.state().has_last) {
+        self.values["lastvalue"] = month_date_value(after.state().last);
+    }
 }
 
 }  // namespace
@@ -778,14 +772,14 @@ namespace {
             result = Value{Null{}};
             return true;
         }
-        const auto parts = split_date(picker_value(self));
-        const std::int64_t number = member == "day"      ? parts.day
-                                    : member == "month"  ? parts.month
-                                    : member == "year"   ? parts.year
-                                    : member == "hour"   ? parts.hour
-                                    : member == "minute" ? parts.minute
-                                    : member == "second" ? parts.second
-                                                         : parts.weekday;
+        const auto parts = picker_model(self).parts();
+        const long number = member == "day"      ? parts.day
+                            : member == "month"  ? parts.month
+                            : member == "year"   ? parts.year
+                            : member == "hour"   ? parts.hour
+                            : member == "minute" ? parts.minute
+                            : member == "second" ? parts.second
+                                                 : parts.weekday;
         result = Value{static_cast<Int16>(number)};
         return true;
     }
@@ -800,26 +794,30 @@ namespace {
         return true;
     };
     if (member == "value") {
+        auto model = picker_model(self);
+        const auto before = model;
         if (std::holds_alternative<Null>(value)) {
-            if (!property_flag(self, "checkbox")) {
+            const auto outcome = model.set_null();
+            if (!outcome.valid) {
                 return invalid();
             }
-            const bool changed = !picker_is_null(self);
-            self.values["value"] = Value{Null{}};
-            return !changed || raise_event(in, self, "Change", {});
+            picker_store(self, before, model, member);
+            return !outcome.changed || raise_event(in, self, "Change", {});
         }
         Value converted = value;
         if (!coerce_property(in, converted, "Date", failure)) {
             return true;
         }
         const auto* date = std::get_if<DateValue>(&converted);
-        if (date == nullptr || !picker_in_range(self, date->serial)) {
+        if (date == nullptr) {
             return invalid();
         }
-        const bool changed =
-            picker_is_null(self) || date->serial != picker_value(self);
-        self.values["value"] = month_date_value(date->serial);
-        return !changed || raise_event(in, self, "Change", {});
+        const auto outcome = model.set_value(date->serial);
+        if (!outcome.valid) {
+            return invalid();
+        }
+        picker_store(self, before, model, member);
+        return !outcome.changed || raise_event(in, self, "Change", {});
     }
     if (member == "mindate" || member == "maxdate") {
         Value converted = value;
@@ -830,29 +828,15 @@ namespace {
         if (date == nullptr) {
             return invalid();
         }
-        const double wanted = std::floor(date->serial);
-        const double low =
-            member == "mindate"
-                ? wanted
-                : month_date_of(self, "mindate", month_first_date());
-        const double high =
-            member == "maxdate"
-                ? wanted
-                : month_date_of(self, "maxdate", month_last_date());
-        if (low > high) {
+        auto model = picker_model(self);
+        const auto before = model;
+        const long wanted = static_cast<long>(std::floor(date->serial));
+        const auto outcome =
+            member == "mindate" ? model.set_min(wanted) : model.set_max(wanted);
+        if (!outcome.valid) {
             return invalid();
         }
-        self.values[member] = month_date_value(wanted);
-        if (!picker_is_null(self)) {
-            const double current = picker_value(self);
-            const double day = std::floor(current);
-            const double fraction = current - day;
-            if (day < low) {
-                self.values["value"] = month_date_value(low + fraction);
-            } else if (day > high) {
-                self.values["value"] = month_date_value(high + fraction);
-            }
-        }
+        picker_store(self, before, model, member);
         return true;
     }
     if (member == "day" || member == "month" || member == "year" ||
@@ -864,37 +848,22 @@ namespace {
         if (!coerce_property(in, converted, "Long", failure)) {
             return true;
         }
-        const long number = static_cast<long>(as_double(converted));
-        const auto parts = split_date(picker_value(self));
-        long year = static_cast<long>(parts.year);
-        long month = static_cast<long>(parts.month);
-        long day = static_cast<long>(parts.day);
-        long hour = static_cast<long>(parts.hour);
-        long minute = static_cast<long>(parts.minute);
-        long second = static_cast<long>(parts.second);
-        (member == "year"     ? year
-         : member == "month"  ? month
-         : member == "day"    ? day
-         : member == "hour"   ? hour
-         : member == "minute" ? minute
-                              : second) = number;
-        if (year < 1601 || year > 9999 || month < 1 || month > 12 || day < 1 ||
-            hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 ||
-            second > 59 ||
-            (member == "day" && day > days_in_month(year, month))) {
+        using Part = wfc::mscomctl2::DateTimePickerModel::Part;
+        auto model = picker_model(self);
+        const auto before = model;
+        const auto outcome =
+            model.set_part(member == "year"     ? Part::Year
+                           : member == "month"  ? Part::Month
+                           : member == "day"    ? Part::Day
+                           : member == "hour"   ? Part::Hour
+                           : member == "minute" ? Part::Minute
+                                                : Part::Second,
+                           static_cast<long>(as_double(converted)));
+        if (!outcome.valid) {
             return invalid();
         }
-        day =
-            std::min<long>(day, static_cast<long>(days_in_month(year, month)));
-        const double serial =
-            date_serial(year, month, day) +
-            (hour * 3600.0 + minute * 60.0 + second) / 86400.0;
-        if (!picker_in_range(self, serial)) {
-            return invalid();
-        }
-        const bool changed = serial != picker_value(self);
-        self.values["value"] = month_date_value(serial);
-        return !changed || raise_event(in, self, "Change", {});
+        picker_store(self, before, model, member);
+        return !outcome.changed || raise_event(in, self, "Change", {});
     }
     return false;
 }
@@ -985,7 +954,7 @@ void picker_push(Interpreter& in, ControlObject& self) {
         words.str(rest);
         words >> first >> key >> shift >> second >> time;
         double serial = 0;
-        if (!picker_parse(second, time, serial)) {
+        if (!wfc::mscomctl2::calendar::parse_datetime(second, time, serial)) {
             return true;
         }
         std::vector<Value> arguments{
@@ -996,9 +965,11 @@ void picker_push(Interpreter& in, ControlObject& self) {
             return false;
         }
         const auto* date = std::get_if<DateValue>(&arguments[3]);
+        auto model = picker_model(self);
+        const auto before = model;
         if (date != nullptr && date->serial != serial &&
-            picker_in_range(self, date->serial)) {
-            self.values["value"] = month_date_value(date->serial);
+            model.set_value(date->serial).valid) {
+            picker_store(self, before, model, "value");
             return raise_event(in, self, "Change", {});
         }
         return true;
@@ -1007,35 +978,28 @@ void picker_push(Interpreter& in, ControlObject& self) {
         return raise_event(in, self, "CloseUp", {});
     }
     if (action == "check") {
-        if (!property_flag(self, "checkbox")) {
-            return true;
-        }
         const bool on = first == "on" || first == "1" || first == "true";
-        if (on == !picker_is_null(self)) {
+        auto model = picker_model(self);
+        const auto before = model;
+        if (!model.check(on).valid) {
             return true;
         }
-        if (on) {
-            const auto last = self.values.find("lastvalue");
-            self.values["value"] =
-                last != self.values.end()
-                    ? last->second
-                    : month_date_value(picker_design_date(self));
-        } else {
-            self.values["lastvalue"] = month_date_value(picker_value(self));
-            self.values["value"] = Value{Null{}};
-        }
+        picker_store(self, before, model, "value");
         return raise_event(in, self, "Change", {});
     }
     if (action == "value") {
         double serial = 0;
-        if (!picker_parse(first, second, serial) ||
-            !picker_in_range(self, serial)) {
+        if (!wfc::mscomctl2::calendar::parse_datetime(first, second, serial)) {
             return true;
         }
-        const bool changed =
-            picker_is_null(self) || serial != picker_value(self);
-        self.values["value"] = month_date_value(serial);
-        return !changed || raise_event(in, self, "Change", {});
+        auto model = picker_model(self);
+        const auto before = model;
+        const auto outcome = model.set_value(serial);
+        if (!outcome.valid) {
+            return true;
+        }
+        picker_store(self, before, model, "value");
+        return !outcome.changed || raise_event(in, self, "Change", {});
     }
     return true;
 }

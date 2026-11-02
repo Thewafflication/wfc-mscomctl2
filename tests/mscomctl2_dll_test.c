@@ -435,6 +435,118 @@ static void wfc_check_monthview(const wchar_t* dll_path) {
     printf("MonthView: the dates and the selection are kept through COM\n");
 }
 
+static VARIANT wfc_null(void) {
+    VARIANT v;
+    VariantInit(&v);
+    v.vt = VT_NULL;
+    return v;
+}
+
+/* The behaviour of a DTPicker made through COM: the value and its parts, the
+ * range, Null with CheckBox, and Change for an advised sink. */
+static void wfc_check_dtpicker(const wchar_t* dll_path) {
+    typedef HRESULT(__stdcall * get_class_object)(REFCLSID, REFIID, void**);
+    HMODULE module = LoadLibraryW(dll_path);
+    get_class_object get;
+    CLSID clsid;
+    IClassFactory* factory = NULL;
+    IDispatch* control = NULL;
+    IConnectionPointContainer* container = NULL;
+    IConnectionPoint* point = NULL;
+    struct wfc_sink sink = {&wfc_sink_vtbl, 0, 0};
+    DWORD cookie = 0;
+    EXCEPINFO exception;
+    VARIANT args[1];
+    VARIANT result;
+    if (module == NULL) {
+        wfc_check_fail("cannot load", dll_path);
+    }
+    get = (get_class_object)(void*)GetProcAddress(module, "DllGetClassObject");
+    CLSIDFromString(L"{D79C5747-8AEF-5741-9F7E-5445F5777595}", &clsid);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    if (get == NULL ||
+        get(&clsid, &IID_IClassFactory, (void**)&factory) != S_OK ||
+        factory->lpVtbl->CreateInstance(factory, NULL, &IID_IDispatch,
+                                        (void**)&control) != S_OK ||
+        control->lpVtbl->QueryInterface(control, &IID_IConnectionPointContainer,
+                                        (void**)&container) != S_OK ||
+        container->lpVtbl->FindConnectionPoint(container, &IID_IDispatch,
+                                               &point) != S_OK ||
+        point->lpVtbl->Advise(point, (IUnknown*)&sink, &cookie) != S_OK) {
+        wfc_check_fail("cannot make a DTPicker in", dll_path);
+    }
+    memset(&exception, 0, sizeof(exception));
+    /* 45000.5 is 2023-03-15 12:00, a Wednesday. */
+    args[0] = wfc_date(45000.5);
+    if (wfc_call(control, L"Value", DISPATCH_PROPERTYPUT, args, 1, NULL,
+                 NULL) != S_OK ||
+        sink.count != 1 || sink.last != 2) {
+        wfc_check_fail("setting Value did not raise Change in", dll_path);
+    }
+    wfc_call(control, L"Value", DISPATCH_PROPERTYPUT, args, 1, NULL, NULL);
+    if (sink.count != 1) {
+        wfc_check_fail("the same Value raised Change in", dll_path);
+    }
+    if (wfc_short_of(control, L"Day") != 15 ||
+        wfc_short_of(control, L"Month") != 3 ||
+        wfc_short_of(control, L"Year") != 2023 ||
+        wfc_short_of(control, L"Hour") != 12 ||
+        wfc_short_of(control, L"Minute") != 0 ||
+        wfc_short_of(control, L"DayOfWeek") != 4) {
+        wfc_check_fail("the parts of Value are wrong in", dll_path);
+    }
+    args[0] = wfc_long(13);
+    if (wfc_call(control, L"Hour", DISPATCH_PROPERTYPUT, args, 1, NULL, NULL) !=
+            S_OK ||
+        sink.count != 2 || wfc_short_of(control, L"Hour") != 13) {
+        wfc_check_fail("Hour did not change Value in", dll_path);
+    }
+    args[0] = wfc_long(25);
+    if (!wfc_refused(wfc_call(control, L"Hour", DISPATCH_PROPERTYPUT, args, 1,
+                              NULL, &exception),
+                     &exception)) {
+        wfc_check_fail("Hour 25 was not error 380 in", dll_path);
+    }
+    args[0] = wfc_null();
+    if (!wfc_refused(wfc_call(control, L"Value", DISPATCH_PROPERTYPUT, args, 1,
+                              NULL, &exception),
+                     &exception)) {
+        wfc_check_fail("Null without CheckBox was not error 380 in", dll_path);
+    }
+    args[0] = wfc_bool(1);
+    wfc_call(control, L"CheckBox", DISPATCH_PROPERTYPUT, args, 1, NULL, NULL);
+    args[0] = wfc_null();
+    VariantInit(&result);
+    if (wfc_call(control, L"Value", DISPATCH_PROPERTYPUT, args, 1, NULL,
+                 NULL) != S_OK ||
+        sink.count != 3 ||
+        wfc_call(control, L"Value", DISPATCH_PROPERTYGET, NULL, 0, &result,
+                 NULL) != S_OK ||
+        result.vt != VT_NULL) {
+        wfc_check_fail("Null with CheckBox was not kept in", dll_path);
+    }
+    VariantInit(&result);
+    if (wfc_call(control, L"Day", DISPATCH_PROPERTYGET, NULL, 0, &result,
+                 NULL) != S_OK ||
+        result.vt != VT_NULL) {
+        wfc_check_fail("a part of Null is not Null in", dll_path);
+    }
+    args[0] = wfc_date(44000);
+    wfc_call(control, L"MaxDate", DISPATCH_PROPERTYPUT, args, 1, NULL, NULL);
+    args[0] = wfc_date(45000);
+    if (!wfc_refused(wfc_call(control, L"Value", DISPATCH_PROPERTYPUT, args, 1,
+                              NULL, &exception),
+                     &exception)) {
+        wfc_check_fail("Value above MaxDate was not error 380 in", dll_path);
+    }
+    point->lpVtbl->Unadvise(point, cookie);
+    point->lpVtbl->Release(point);
+    container->lpVtbl->Release(container);
+    control->lpVtbl->Release(control);
+    factory->lpVtbl->Release(factory);
+    printf("DTPicker: the value and its range are kept through COM\n");
+}
+
 int main(int argc, char** argv) {
     int checked = wfc_check_dll(argc, argv, L"mscomctl2", kClasses,
                                 sizeof(kClasses) / sizeof(kClasses[0]));
@@ -448,5 +560,6 @@ int main(int argc, char** argv) {
     }
     wfc_check_updown(wfc_check_widen(argv[1]));
     wfc_check_monthview(wfc_check_widen(argv[1]));
+    wfc_check_dtpicker(wfc_check_widen(argv[1]));
     return 0;
 }

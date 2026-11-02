@@ -64,8 +64,15 @@ requirement:
       property (`DayBold(date)`). Tested by `monthview_test` and through COM.
 - [ ] MonthView events and the user's selection through COM (they come from
       the window).
-- [ ] The other controls' behaviour (DTPicker, Animation, FlatScrollBar),
-      then wfc-mscomctl, wfc-comdlg32 and wfc-mswinsck.
+- [x] DTPicker behaviour in the library (`dtpicker.hpp`: the date and time,
+      the range, Null with CheckBox, the parts of Value; the calendar
+      arithmetic moved to `calendar.hpp`, shared with MonthView). The
+      evaluator and the COM object use it; a COM DTPicker raises `Change`
+      to an advised sink. Tested by `dtpicker_test` and through COM.
+- [ ] DTPicker callback fields, the drop-down calendar and the check box
+      click through COM (they come from the window).
+- [ ] The other controls' behaviour (Animation, FlatScrollBar), then
+      wfc-mscomctl, wfc-comdlg32 and wfc-mswinsck.
 
 ## 0.8: Microsoft ids verified
 

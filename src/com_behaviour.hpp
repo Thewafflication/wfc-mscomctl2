@@ -6,6 +6,7 @@
 #ifndef WFC_MSCOMCTL2_COM_BEHAVIOUR_HPP
 #define WFC_MSCOMCTL2_COM_BEHAVIOUR_HPP
 
+#include <wfc/mscomctl2/dtpicker.hpp>
 #include <wfc/mscomctl2/monthview.hpp>
 #include <wfc/mscomctl2/updown.hpp>
 #include <wfc/ocx/class_factory.hpp>
@@ -271,6 +272,150 @@ private:
     DayBold bold_;
 };
 
+// A DTPicker keeps its date and time in its model: Value is a Date, or Null
+// while CheckBox is True and the box is cleared; MinDate and MaxDate keep it in
+// range; Day, Month, Year, Hour, Minute, Second and DayOfWeek are its parts
+// (Null when it is Null). A value outside the range is error 380, and a change
+// of Value raises Change. The other properties are stored by the control as
+// for any member.
+class DateTimePickerBehaviour final : public wfc::com::Behaviour {
+public:
+    HRESULT put(const std::string& member, const Index&, const VARIANT& value,
+                long* error, std::vector<std::string>* events) override {
+        using Part = DateTimePickerModel::Part;
+        if (member == "checkbox") {
+            VARIANT flag;
+            VariantInit(&flag);
+            if (VariantChangeType(&flag, const_cast<VARIANT*>(&value), 0,
+                                  VT_BOOL) != S_OK) {
+                *error = 13;
+                return E_FAIL;
+            }
+            model_.set_checkbox(flag.boolVal != VARIANT_FALSE);
+            return S_OK;
+        }
+        if (member == "value") {
+            if (value.vt == VT_NULL) {
+                const auto outcome = model_.set_null();
+                return finish(outcome, error, events);
+            }
+            double date = 0;
+            if (!to_date(value, date)) {
+                *error = 13;
+                return E_FAIL;
+            }
+            return finish(model_.set_value(date), error, events);
+        }
+        if (member == "mindate" || member == "maxdate") {
+            double date = 0;
+            if (!to_date(value, date)) {
+                *error = 13;
+                return E_FAIL;
+            }
+            const long day = static_cast<long>(std::floor(date));
+            const auto outcome =
+                member == "mindate" ? model_.set_min(day) : model_.set_max(day);
+            return outcome.valid ? S_OK : refuse(error);
+        }
+        if (member == "day" || member == "month" || member == "year" ||
+            member == "hour" || member == "minute" || member == "second") {
+            VARIANT number;
+            VariantInit(&number);
+            if (model_.is_null()) {
+                return refuse(error);
+            }
+            if (VariantChangeType(&number, const_cast<VARIANT*>(&value), 0,
+                                  VT_I4) != S_OK) {
+                *error = 13;
+                return E_FAIL;
+            }
+            return finish(model_.set_part(member == "year"     ? Part::Year
+                                          : member == "month"  ? Part::Month
+                                          : member == "day"    ? Part::Day
+                                          : member == "hour"   ? Part::Hour
+                                          : member == "minute" ? Part::Minute
+                                                               : Part::Second,
+                                          number.lVal),
+                          error, events);
+        }
+        return S_FALSE;
+    }
+
+    HRESULT get(const std::string& member, const Index&, VARIANT* result,
+                long*) override {
+        if (member == "value") {
+            if (model_.is_null()) {
+                result->vt = VT_NULL;
+                return S_OK;
+            }
+            result->vt = VT_DATE;
+            result->date = model_.value();
+            return S_OK;
+        }
+        if (member == "mindate" || member == "maxdate") {
+            result->vt = VT_DATE;
+            result->date = static_cast<DATE>(
+                member == "mindate" ? model_.min() : model_.max());
+            return S_OK;
+        }
+        if (member == "checkbox") {
+            result->vt = VT_BOOL;
+            result->boolVal = model_.checkbox() ? VARIANT_TRUE : VARIANT_FALSE;
+            return S_OK;
+        }
+        if (member == "day" || member == "month" || member == "year" ||
+            member == "hour" || member == "minute" || member == "second" ||
+            member == "dayofweek") {
+            if (model_.is_null()) {
+                result->vt = VT_NULL;
+                return S_OK;
+            }
+            const auto parts = model_.parts();
+            result->vt = VT_I2;
+            result->iVal =
+                static_cast<SHORT>(member == "day"      ? parts.day
+                                   : member == "month"  ? parts.month
+                                   : member == "year"   ? parts.year
+                                   : member == "hour"   ? parts.hour
+                                   : member == "minute" ? parts.minute
+                                   : member == "second" ? parts.second
+                                                        : parts.weekday);
+            return S_OK;
+        }
+        return S_FALSE;
+    }
+
+private:
+    static bool to_date(const VARIANT& value, double& date) {
+        VARIANT converted;
+        VariantInit(&converted);
+        if (VariantChangeType(&converted, const_cast<VARIANT*>(&value), 0,
+                              VT_DATE) != S_OK) {
+            return false;
+        }
+        date = converted.date;
+        return true;
+    }
+
+    static HRESULT refuse(long* error) {
+        *error = 380;  // invalid property value
+        return E_FAIL;
+    }
+
+    static HRESULT finish(const DateTimePickerModel::Outcome& outcome,
+                          long* error, std::vector<std::string>* events) {
+        if (!outcome.valid) {
+            return refuse(error);
+        }
+        if (outcome.changed) {
+            events->push_back("Change");
+        }
+        return S_OK;
+    }
+
+    DateTimePickerModel model_{calendar::now()};
+};
+
 // The behaviour of the class called `class_name`, none for most of them yet.
 inline std::unique_ptr<wfc::com::Behaviour> make_behaviour(
     const char* class_name) {
@@ -279,6 +424,9 @@ inline std::unique_ptr<wfc::com::Behaviour> make_behaviour(
     }
     if (_stricmp(class_name, "MonthView") == 0) {
         return std::make_unique<MonthViewBehaviour>();
+    }
+    if (_stricmp(class_name, "DTPicker") == 0) {
+        return std::make_unique<DateTimePickerBehaviour>();
     }
     return nullptr;
 }

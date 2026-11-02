@@ -10,109 +10,12 @@
 #ifndef WFC_MSCOMCTL2_MONTHVIEW_HPP
 #define WFC_MSCOMCTL2_MONTHVIEW_HPP
 
+#include <wfc/mscomctl2/calendar.hpp>
+
 #include <algorithm>
-#include <ctime>
 #include <set>
 
 namespace wfc::mscomctl2 {
-
-// ----- Calendar arithmetic --------------------------------------------------
-
-namespace calendar {
-
-[[nodiscard]] inline long days_from_civil(long year, const long month,
-                                          const long day) {
-    year -= month <= 2 ? 1 : 0;
-    const long era = (year >= 0 ? year : year - 399) / 400;
-    const long year_of_era = year - era * 400;
-    const long day_of_year =
-        (153 * (month + (month > 2 ? -3 : 9)) + 2) / 5 + day - 1;
-    const long day_of_era =
-        year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
-    return era * 146097 + day_of_era - 719468;
-}
-
-inline void civil_from_days(long days, long& year, long& month, long& day) {
-    days += 719468;
-    const long era = (days >= 0 ? days : days - 146096) / 146097;
-    const long day_of_era = days - era * 146097;
-    const long year_of_era = (day_of_era - day_of_era / 1460 +
-                              day_of_era / 36524 - day_of_era / 146096) /
-                             365;
-    year = year_of_era + era * 400;
-    const long day_of_year =
-        day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
-    const long mp = (5 * day_of_year + 2) / 153;
-    day = day_of_year - (153 * mp + 2) / 5 + 1;
-    month = mp < 10 ? mp + 3 : mp - 9;
-    year += month <= 2 ? 1 : 0;
-}
-
-// 1970-01-01 as a date serial.
-inline constexpr long kEpochOffset = 25569;
-
-[[nodiscard]] inline bool is_leap_year(const long year) {
-    return (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
-}
-
-[[nodiscard]] inline long days_in_month(const long year, const long month) {
-    constexpr long lengths[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    return month == 2 && is_leap_year(year) ? 29 : lengths[month - 1];
-}
-
-// The serial of a year, month (1 to 12) and day.
-[[nodiscard]] inline long serial(const long year, const long month,
-                                 const long day) {
-    return days_from_civil(year, month, day) + kEpochOffset;
-}
-
-struct Parts {
-    long year = 0;
-    long month = 0;
-    long day = 0;
-    long weekday = 0;  // 1 = Sunday
-};
-
-[[nodiscard]] inline Parts parts(const long date) {
-    Parts result;
-    civil_from_days(date - kEpochOffset, result.year, result.month, result.day);
-    result.weekday = ((date % 7) + 7 + 6) % 7 + 1;
-    return result;
-}
-
-// The week of the year for weeks starting on `first_day` (1 = Sunday), week 1
-// being the one that holds January 1 (vbFirstJan1).
-[[nodiscard]] inline long week_of_year(const long date, const long first_day) {
-    const Parts of = parts(date);
-    const long jan1 = serial(of.year, 1, 1);
-    const long offset = (parts(jan1).weekday - first_day + 7) % 7;
-    return (date - (jan1 - offset)) / 7 + 1;
-}
-
-// Today's date (the local one).
-[[nodiscard]] inline long today() {
-    const std::time_t now = std::time(nullptr);
-    std::tm local{};
-#ifdef _WIN32
-    localtime_s(&local, &now);
-#else
-    localtime_r(&now, &local);
-#endif
-    return serial(local.tm_year + 1900, local.tm_mon + 1, local.tm_mday);
-}
-
-inline constexpr int kFirstYear = 1601;
-inline constexpr int kLastYear = 9999;
-
-[[nodiscard]] inline long first_date() {
-    return serial(kFirstYear, 1, 1);
-}
-
-[[nodiscard]] inline long last_date() {
-    return serial(kLastYear, 12, 31);
-}
-
-}  // namespace calendar
 
 // ----- The days shown in bold ------------------------------------------------
 
