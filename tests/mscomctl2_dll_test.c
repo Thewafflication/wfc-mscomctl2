@@ -3,6 +3,8 @@
  * the version and the target as arguments. */
 #include "dll_check.h"
 
+#include <ocidl.h>
+
 static const struct wfc_check_class kClasses[] = {
     {L"WFC.MSComCtl2.Animation", L"{7F0C74C8-0C87-5AE2-A134-DAD91A6F99F7}",
      L"MSComCtl2.Animation.2", L"{B09DE715-87C1-11D1-8BE3-0000F8754DA1}"},
@@ -66,6 +68,113 @@ static void wfc_free_exception(EXCEPINFO* exception) {
     memset(exception, 0, sizeof(*exception));
 }
 
+/* An event sink that counts the events it is sent. */
+struct wfc_sink {
+    IDispatchVtbl* lpVtbl;
+    long count;
+    DISPID last;
+};
+
+static HRESULT __stdcall wfc_sink_query(IDispatch* self, REFIID iid,
+                                        void** object) {
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IDispatch)) {
+        *object = self;
+        return S_OK;
+    }
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG __stdcall wfc_sink_ref(IDispatch* self) {
+    (void)self;
+    return 2;
+}
+
+static HRESULT __stdcall wfc_sink_count(IDispatch* self, UINT* count) {
+    (void)self;
+    *count = 0;
+    return S_OK;
+}
+
+static HRESULT __stdcall wfc_sink_type(IDispatch* self, UINT i, LCID l,
+                                       ITypeInfo** info) {
+    (void)self;
+    (void)i;
+    (void)l;
+    *info = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT __stdcall wfc_sink_names(IDispatch* self, REFIID iid,
+                                        LPOLESTR* names, UINT n, LCID l,
+                                        DISPID* ids) {
+    (void)self;
+    (void)iid;
+    (void)names;
+    (void)n;
+    (void)l;
+    (void)ids;
+    return E_NOTIMPL;
+}
+
+static HRESULT __stdcall wfc_sink_invoke(IDispatch* self, DISPID id, REFIID iid,
+                                         LCID l, WORD flags, DISPPARAMS* p,
+                                         VARIANT* r, EXCEPINFO* e, UINT* a) {
+    struct wfc_sink* sink = (struct wfc_sink*)self;
+    (void)iid;
+    (void)l;
+    (void)flags;
+    (void)p;
+    (void)r;
+    (void)e;
+    (void)a;
+    ++sink->count;
+    sink->last = id;
+    return S_OK;
+}
+
+static IDispatchVtbl wfc_sink_vtbl = {
+    wfc_sink_query, wfc_sink_ref,   wfc_sink_ref,   wfc_sink_count,
+    wfc_sink_type,  wfc_sink_names, wfc_sink_invoke};
+
+/* Change (dispatch id 1) reaches an advised sink when Value changes, and not
+ * after Unadvise. */
+static void wfc_check_updown_events(IDispatch* control, const wchar_t* dll) {
+    struct wfc_sink sink = {&wfc_sink_vtbl, 0, 0};
+    IConnectionPointContainer* container = NULL;
+    IConnectionPoint* point = NULL;
+    DWORD cookie = 0;
+    HRESULT hr;
+    if (control->lpVtbl->QueryInterface(control, &IID_IConnectionPointContainer,
+                                        (void**)&container) != S_OK ||
+        container->lpVtbl->FindConnectionPoint(container, &IID_IDispatch,
+                                               &point) != S_OK ||
+        point->lpVtbl->Advise(point, (IUnknown*)&sink, &cookie) != S_OK) {
+        wfc_check_fail("no connection point for the events of", dll);
+    }
+    wfc_updown_put(control, L"Value", 3, NULL);
+    if (sink.count != 1 || sink.last != 1) {
+        wfc_check_fail("Change was not raised for a new Value in", dll);
+    }
+    wfc_updown_put(control, L"Value", 3, NULL);
+    if (sink.count != 1) {
+        wfc_check_fail("Change was raised though Value did not change in", dll);
+    }
+    wfc_updown_put(control, L"Max", 2, NULL);
+    if (sink.count != 2 || wfc_updown_get(control, L"Value", &hr) != 2) {
+        wfc_check_fail("Change was not raised when Max moved Value in", dll);
+    }
+    if (point->lpVtbl->Unadvise(point, cookie) != S_OK) {
+        wfc_check_fail("Unadvise failed in", dll);
+    }
+    wfc_updown_put(control, L"Value", 0, NULL);
+    if (sink.count != 2) {
+        wfc_check_fail("Change reached a sink that had unadvised in", dll);
+    }
+    point->lpVtbl->Release(point);
+    container->lpVtbl->Release(container);
+}
+
 static void wfc_check_updown(const wchar_t* dll_path) {
     typedef HRESULT(__stdcall * get_class_object)(REFCLSID, REFIID, void**);
     HMODULE module = LoadLibraryW(dll_path);
@@ -113,6 +222,7 @@ static void wfc_check_updown(const wchar_t* dll_path) {
         wfc_check_fail("Min above Max was accepted in", dll_path);
     }
     wfc_free_exception(&exception);
+    wfc_check_updown_events(control, dll_path);
     control->lpVtbl->Release(control);
     factory->lpVtbl->Release(factory);
     printf("UpDown: the range is kept through COM\n");

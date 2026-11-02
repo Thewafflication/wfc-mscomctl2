@@ -52,8 +52,13 @@ requirement:
       error 380); the evaluator and the COM object both use it
       (`class_factory.hpp` takes a `Behaviour` per class). Tested by
       `updown_test` and, through COM, by `mscomctl2_dll_test`.
-- [ ] UpDown events (`Change`, `UpClick`, `DownClick`) and the buddy through
-      COM (needs connection points); then the other four controls.
+- [x] Events through COM: a control offers a connection point
+      (`IConnectionPointContainer`); an UpDown raises `Change` to an advised
+      sink when Value changes (tested with a C sink).
+- [ ] UpDown `UpClick`/`DownClick` (they come from the window, which a COM
+      object does not have yet) and the buddy through COM.
+- [ ] The other four controls' behaviour (MonthView, DTPicker, Animation,
+      FlatScrollBar), then wfc-mscomctl, wfc-comdlg32 and wfc-mswinsck.
 
 ## 0.8: Microsoft ids verified
 

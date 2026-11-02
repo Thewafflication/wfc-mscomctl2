@@ -11,16 +11,18 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace wfc::mscomctl2 {
 
 // An UpDown keeps Min, Max, Value, Increment and Wrap in its model: Value is
-// kept inside the range and a value outside it is error 380. The other
+// kept inside the range and a value outside it is error 380; a change of
+// Value raises Change. The other
 // properties are stored by the control as for any member.
 class UpDownBehaviour final : public wfc::com::Behaviour {
 public:
-    HRESULT put(const std::string& member, const VARIANT& value,
-                long* error) override {
+    HRESULT put(const std::string& member, const VARIANT& value, long* error,
+                std::vector<std::string>* events) override {
         if (member == "wrap") {
             VARIANT flag;
             VariantInit(&flag);
@@ -54,6 +56,9 @@ public:
         if (!outcome.valid) {
             *error = 380;  // invalid property value
             return E_FAIL;
+        }
+        if (outcome.changed) {
+            events->push_back("Change");
         }
         return S_OK;
     }
