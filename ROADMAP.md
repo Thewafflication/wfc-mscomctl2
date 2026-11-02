@@ -47,6 +47,13 @@ requirement:
       (IDispatch) controls built from the member table, without the WFC
       evaluator (`include/wfc/ocx/class_factory.hpp`, tested by
       `wfc_check_create`). The behaviour is still the evaluator's.
+- [x] Behaviour moves into the library: UpDown first. `updown.hpp` holds the
+      rules (steps, Wrap, the position of the arrows, Min, Max and Value,
+      error 380); the evaluator and the COM object both use it
+      (`class_factory.hpp` takes a `Behaviour` per class). Tested by
+      `updown_test` and, through COM, by `mscomctl2_dll_test`.
+- [ ] UpDown events (`Change`, `UpClick`, `DownClick`) and the buddy through
+      COM (needs connection points); then the other four controls.
 
 ## 0.8: Microsoft ids verified
 

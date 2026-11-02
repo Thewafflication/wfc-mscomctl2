@@ -15,6 +15,17 @@
 // Max to Min and back. The behaviour follows the documented control (there is
 // no reference probe of the Microsoft control yet, see COMPATIBILITY.md).
 
+// The properties of the control as the library's model of its behaviour
+// (wfc/mscomctl2/updown.hpp).
+[[nodiscard]] wfc::mscomctl2::UpDownModel updown_model(ControlObject& self) {
+    return wfc::mscomctl2::UpDownModel{
+        static_cast<long>(number_property(self, "min")),
+        static_cast<long>(number_property(self, "max")),
+        static_cast<long>(number_property(self, "value")),
+        static_cast<long>(number_property(self, "increment")),
+        control_flag(self, "wrap")};
+}
+
 // The user clicks an arrow (a scripted `ui <control> up|down`), or the host
 // reports the new position of the arrows (`position <value>`).
 [[nodiscard]] bool updown_input(Interpreter& in, ControlObject& self,
@@ -23,32 +34,18 @@
     if (action != "up" && action != "down" && action != "position") {
         return true;
     }
-    const long minimum = static_cast<long>(number_property(self, "min"));
-    const long maximum = static_cast<long>(number_property(self, "max"));
-    const long current = static_cast<long>(number_property(self, "value"));
-    long wanted = current;
-    bool up = action == "up";
-    if (action == "position") {
-        wanted = std::min(std::max(std::atol(rest.c_str()), minimum), maximum);
-        up = wanted >= current;
-    } else {
-        const long step = std::max(
-            1L, static_cast<long>(number_property(self, "increment")));
-        wanted = up ? current + step : current - step;
-        if (wanted > maximum) {
-            wanted = control_flag(self, "wrap") ? minimum : maximum;
-        } else if (wanted < minimum) {
-            wanted = control_flag(self, "wrap") ? maximum : minimum;
-        }
-    }
-    if (wanted != current) {
-        self.values["value"] = Value{static_cast<Integer>(wanted)};
+    wfc::mscomctl2::UpDownModel model = updown_model(self);
+    const auto outcome = action == "position"
+                             ? model.position(std::atol(rest.c_str()))
+                             : model.click(action == "up");
+    if (outcome.changed) {
+        self.values["value"] = Value{static_cast<Integer>(model.value())};
         updown_sync_out(in, self);
     }
-    if (!raise_event(in, self, up ? "UpClick" : "DownClick", {})) {
+    if (!raise_event(in, self, outcome.up ? "UpClick" : "DownClick", {})) {
         return false;
     }
-    if (wanted != current) {
+    if (outcome.changed) {
         return raise_event(in, self, "Change", {});
     }
     return true;
@@ -151,8 +148,7 @@ void updown_sync_in(Interpreter& in, ControlObject& self) {
     NativeFailure ignored;
     std::vector<CallArgument> none;
     Value held;
-    if (!buddy->get(in, property, none, held, ignored) ||
-        ignored.number != 0) {
+    if (!buddy->get(in, property, none, held, ignored) || ignored.number != 0) {
         return;
     }
     double number = 0;
@@ -199,7 +195,8 @@ void comctl_form_loaded(Interpreter& in, InstanceData& form) {
     });
 }
 
-// ----- MonthView ---------------------------------------------------------------
+// ----- MonthView
+// ---------------------------------------------------------------
 //
 // A calendar. Value is the selected date (SelStart and SelEnd with
 // MultiSelect, up to MaxSelCount days); Day, Month, Year, DayOfWeek and Week
@@ -301,8 +298,8 @@ struct MonthViewState final : OcxState {
         return false;
     }
     const long day = std::strtol(end + 1, &end, 10);
-    if (*end != '\0' || year < 1601 || year > 9999 || month < 1 ||
-        month > 12 || day < 1 || day > days_in_month(year, month)) {
+    if (*end != '\0' || year < 1601 || year > 9999 || month < 1 || month > 12 ||
+        day < 1 || day > days_in_month(year, month)) {
         return false;
     }
     serial = date_serial(year, month, day);
@@ -366,7 +363,8 @@ void month_select_one(ControlObject& self, const double serial) {
             return at < arguments.size() ? as_double(arguments[at].value) : 0.0;
         };
         const auto give = [&](const std::size_t at, Value output) {
-            if (at < arguments.size() && arguments[at].byref_target != nullptr) {
+            if (at < arguments.size() &&
+                arguments[at].byref_target != nullptr) {
                 *arguments[at].byref_target = std::move(output);
             }
         };
@@ -419,8 +417,9 @@ void month_select_one(ControlObject& self, const double serial) {
             vb_week_of_year(value, month_first_day(self), 1))};
     } else if (member == "visibledays") {
         const long index =
-            arguments.empty() ? 0
-                              : static_cast<long>(as_double(arguments[0].value));
+            arguments.empty()
+                ? 0
+                : static_cast<long>(as_double(arguments[0].value));
         if (index < 1 || index > 42) {
             failure = NativeFailure{380, "Invalid property value"};
             return true;
@@ -528,7 +527,8 @@ void month_select_one(ControlObject& self, const double serial) {
             (member == "day" && day > days_in_month(year, month))) {
             return invalid();
         }
-        day = std::min<long>(day, static_cast<long>(days_in_month(year, month)));
+        day =
+            std::min<long>(day, static_cast<long>(days_in_month(year, month)));
         const double serial = date_serial(year, month, day);
         if (!month_in_range(self, serial)) {
             return invalid();
@@ -646,8 +646,8 @@ namespace {
         return true;
     }
     if (action == "getdaybold") {
-        return month_get_day_bold(in, self, start,
-                                  second.empty() ? 0 : std::atol(second.c_str()));
+        return month_get_day_bold(
+            in, self, start, second.empty() ? 0 : std::atol(second.c_str()));
     }
     if (action == "click" || action == "dblclick") {
         return month_user_select(in, self, start, start, action == "dblclick");
@@ -699,18 +699,19 @@ void monthview_snapshot(ControlObject& self, ui::CommonSnapshot& snapshot) {
     }
 }
 
-// ----- DTPicker ------------------------------------------------------------------
+// ----- DTPicker
+// ------------------------------------------------------------------
 //
 // A date and time picker. Value is a Date (a Null Variant while CheckBox is
 // True and the box is cleared); Format (0 long date, 1 short date, 2 time, 3
 // CustomFormat) says how it is shown; UpDown replaces the drop-down calendar
-// with spin arrows. Day, Month, Year, Hour, Minute, Second and DayOfWeek are the
-// parts of Value (Null when it is Null). MinDate and MaxDate keep it in range
-// (380 outside). Change is raised when Value changes, by code or by the user;
-// DropDown and CloseUp bracket the calendar. In scripts: `ui <control> value
-// yyyy-mm-dd[ hh:mm:ss]`, `ui <control> check on|off`, `ui <control> dropdown`
-// and `ui <control> closeup`. The behaviour follows the documented control;
-// there is no reference probe.
+// with spin arrows. Day, Month, Year, Hour, Minute, Second and DayOfWeek are
+// the parts of Value (Null when it is Null). MinDate and MaxDate keep it in
+// range (380 outside). Change is raised when Value changes, by code or by the
+// user; DropDown and CloseUp bracket the calendar. In scripts: `ui <control>
+// value yyyy-mm-dd[ hh:mm:ss]`, `ui <control> check on|off`, `ui <control>
+// dropdown` and `ui <control> closeup`. The behaviour follows the documented
+// control; there is no reference probe.
 
 namespace {
 
@@ -767,8 +768,8 @@ namespace {
 }
 
 // `yyyy-mm-dd` with an optional ` hh:mm:ss` to a serial.
-[[nodiscard]] bool picker_parse(const std::string& date, const std::string& time,
-                                double& serial) {
+[[nodiscard]] bool picker_parse(const std::string& date,
+                                const std::string& time, double& serial) {
     double day = 0;
     if (!month_parse(date, day)) {
         return false;
@@ -819,12 +820,12 @@ namespace {
         }
         const auto parts = split_date(picker_value(self));
         const std::int64_t number = member == "day"      ? parts.day
-                            : member == "month"  ? parts.month
-                            : member == "year"   ? parts.year
-                            : member == "hour"   ? parts.hour
-                            : member == "minute" ? parts.minute
-                            : member == "second" ? parts.second
-                                                 : parts.weekday;
+                                    : member == "month"  ? parts.month
+                                    : member == "year"   ? parts.year
+                                    : member == "hour"   ? parts.hour
+                                    : member == "minute" ? parts.minute
+                                    : member == "second" ? parts.second
+                                                         : parts.weekday;
         result = Value{static_cast<Int16>(number)};
         return true;
     }
@@ -871,11 +872,13 @@ namespace {
         }
         const double wanted = std::floor(date->serial);
         const double low =
-            member == "mindate" ? wanted
-                                : month_date_of(self, "mindate", month_first_date());
+            member == "mindate"
+                ? wanted
+                : month_date_of(self, "mindate", month_first_date());
         const double high =
-            member == "maxdate" ? wanted
-                                : month_date_of(self, "maxdate", month_last_date());
+            member == "maxdate"
+                ? wanted
+                : month_date_of(self, "maxdate", month_last_date());
         if (low > high) {
             return invalid();
         }
@@ -921,7 +924,8 @@ namespace {
             (member == "day" && day > days_in_month(year, month))) {
             return invalid();
         }
-        day = std::min<long>(day, static_cast<long>(days_in_month(year, month)));
+        day =
+            std::min<long>(day, static_cast<long>(days_in_month(year, month)));
         const double serial =
             date_serial(year, month, day) +
             (hour * 3600.0 + minute * 60.0 + second) / 86400.0;
@@ -1053,8 +1057,9 @@ void picker_push(Interpreter& in, ControlObject& self) {
         if (on) {
             const auto last = self.values.find("lastvalue");
             self.values["value"] =
-                last != self.values.end() ? last->second
-                                          : month_date_value(picker_design_date(self));
+                last != self.values.end()
+                    ? last->second
+                    : month_date_value(picker_design_date(self));
         } else {
             self.values["lastvalue"] = month_date_value(picker_value(self));
             self.values["value"] = Value{Null{}};
@@ -1100,7 +1105,8 @@ void dtpicker_snapshot(ControlObject& self, ui::CommonSnapshot& snapshot) {
     }
 }
 
-// ----- Animation -----------------------------------------------------------------
+// ----- Animation
+// -----------------------------------------------------------------
 //
 // Plays a silent AVI clip. Open(file) loads it (53 when the file does not
 // exist, 5 when it is not an AVI file); with AutoPlay it starts at once.
@@ -1146,9 +1152,9 @@ void animation_host(Interpreter& in, ControlObject& self,
                                  std::vector<CallArgument>& arguments,
                                  Value& result, NativeFailure& failure) {
     if (member == "open") {
-        const std::string path =
-            arguments.empty() ? std::string{}
-                              : FormSupport::text_of(arguments[0].value);
+        const std::string path = arguments.empty()
+                                     ? std::string{}
+                                     : FormSupport::text_of(arguments[0].value);
         result = Value{Empty{}};
         if (const Integer problem = animation_check(path); problem != 0) {
             failure = NativeFailure{
