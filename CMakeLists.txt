@@ -168,6 +168,21 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     PROPERTIES LABELS "unit;mp-0010;mscomctl2" TIMEOUT 120
   )
 
+  add_executable(mscomctl2_scrollbar_test tests/scrollbar_test.cpp)
+  target_link_libraries(mscomctl2_scrollbar_test PRIVATE wfc_mscomctl2)
+  target_compile_features(mscomctl2_scrollbar_test PRIVATE cxx_std_20)
+  if(COMMAND wfc_enable_strict_warnings)
+    wfc_enable_strict_warnings(mscomctl2_scrollbar_test)
+  endif()
+  if(COMMAND wsp_enable_hardening)
+    wsp_enable_hardening(mscomctl2_scrollbar_test)
+  endif()
+  add_test(NAME TC-MP0010-mscomctl2-scrollbar COMMAND mscomctl2_scrollbar_test)
+  set_tests_properties(
+    TC-MP0010-mscomctl2-scrollbar
+    PROPERTIES LABELS "unit;mp-0010;mscomctl2" TIMEOUT 120
+  )
+
   add_executable(mscomctl2_monthview_test tests/monthview_test.cpp)
   target_link_libraries(mscomctl2_monthview_test PRIVATE wfc_mscomctl2)
   target_compile_features(mscomctl2_monthview_test PRIVATE cxx_std_20)

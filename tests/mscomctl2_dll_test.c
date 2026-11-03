@@ -228,6 +228,55 @@ static void wfc_check_updown(const wchar_t* dll_path) {
     printf("UpDown: the range is kept through COM\n");
 }
 
+/* The behaviour of a FlatScrollBar made through COM: the defaults of the
+ * control, and a Value outside Min and Max refused with error 380. */
+static void wfc_check_flatscrollbar(const wchar_t* dll_path) {
+    HMODULE module = LoadLibraryW(dll_path);
+    get_class_object get;
+    CLSID clsid;
+    IClassFactory* factory = NULL;
+    IDispatch* control = NULL;
+    EXCEPINFO exception;
+    HRESULT hr;
+    if (module == NULL) {
+        wfc_check_fail("cannot load", dll_path);
+    }
+    get = (get_class_object)(void*)GetProcAddress(module, "DllGetClassObject");
+    CLSIDFromString(L"{E5EE73B3-49BC-5CF6-82F1-39EEC8F37260}", &clsid);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    if (get == NULL ||
+        get(&clsid, &IID_IClassFactory, (void**)&factory) != S_OK ||
+        factory->lpVtbl->CreateInstance(factory, NULL, &IID_IDispatch,
+                                        (void**)&control) != S_OK) {
+        wfc_check_fail("cannot make a FlatScrollBar in", dll_path);
+    }
+    if (wfc_updown_get(control, L"Min", &hr) != 0 ||
+        wfc_updown_get(control, L"Max", &hr) != 32767 ||
+        wfc_updown_get(control, L"SmallChange", &hr) != 1 ||
+        wfc_updown_get(control, L"LargeChange", &hr) != 1 ||
+        wfc_updown_get(control, L"Value", &hr) != 0) {
+        wfc_check_fail("the defaults of the FlatScrollBar are wrong in",
+                       dll_path);
+    }
+    memset(&exception, 0, sizeof(exception));
+    if (wfc_updown_put(control, L"Max", 100, NULL) != S_OK) {
+        wfc_check_fail("Max was refused by the FlatScrollBar in", dll_path);
+    }
+    hr = wfc_updown_put(control, L"Value", 101, &exception);
+    if (hr != DISP_E_EXCEPTION || (exception.scode & 0xFFFF) != 380) {
+        wfc_check_fail("Value above Max was not error 380 in", dll_path);
+    }
+    wfc_free_exception(&exception);
+    if (wfc_updown_put(control, L"Value", 70, NULL) != S_OK ||
+        wfc_updown_get(control, L"Value", &hr) != 70) {
+        wfc_check_fail("Value did not follow the range in", dll_path);
+    }
+    control->lpVtbl->Release(control);
+    factory->lpVtbl->Release(factory);
+    printf("FlatScrollBar: the range is kept through COM
+");
+}
+
 /* Calls a member of a late-bound control. `args` are in COM order (the last
  * argument first); a property put has the value first and is named. */
 static HRESULT wfc_call(IDispatch* control, const wchar_t* name, WORD flags,
@@ -559,6 +608,7 @@ int main(int argc, char** argv) {
         return 1;
     }
     wfc_check_updown(wfc_check_widen(argv[1]));
+    wfc_check_flatscrollbar(wfc_check_widen(argv[1]));
     wfc_check_monthview(wfc_check_widen(argv[1]));
     wfc_check_dtpicker(wfc_check_widen(argv[1]));
     return 0;

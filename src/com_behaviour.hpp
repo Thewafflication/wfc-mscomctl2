@@ -8,6 +8,7 @@
 
 #include <wfc/mscomctl2/dtpicker.hpp>
 #include <wfc/mscomctl2/monthview.hpp>
+#include <wfc/mscomctl2/scrollbar.hpp>
 #include <wfc/mscomctl2/updown.hpp>
 #include <wfc/ocx/class_factory.hpp>
 
@@ -416,6 +417,72 @@ private:
     DateTimePickerModel model_{calendar::now()};
 };
 
+// A FlatScrollBar keeps Min, Max, Value, SmallChange and LargeChange in its
+// model as the intrinsic scroll bars do: Min may be above Max, a Value outside
+// the range is error 380, and a change of Value raises Change. The other
+// properties are stored by the control as for any member.
+class FlatScrollBarBehaviour final : public wfc::com::Behaviour {
+public:
+    HRESULT put(const std::string& member, const Index&, const VARIANT& value,
+                long* error, std::vector<std::string>* events) override {
+        if (member != "min" && member != "max" && member != "value" &&
+            member != "smallchange" && member != "largechange") {
+            return S_FALSE;
+        }
+        VARIANT number;
+        VariantInit(&number);
+        if (VariantChangeType(&number, const_cast<VARIANT*>(&value), 0,
+                              VT_I4) != S_OK) {
+            *error = 13;  // type mismatch
+            return E_FAIL;
+        }
+        const long wanted = number.lVal;
+        if (member == "min") {
+            model_.set_min(wanted);
+        } else if (member == "max") {
+            model_.set_max(wanted);
+        } else if (member == "smallchange") {
+            model_.set_small_change(wanted);
+        } else if (member == "largechange") {
+            model_.set_large_change(wanted);
+        } else {
+            const auto outcome = model_.set_value(wanted);
+            if (!outcome.valid) {
+                *error = 380;  // invalid property value
+                return E_FAIL;
+            }
+            if (outcome.changed) {
+                events->push_back("Change");
+            }
+        }
+        return S_OK;
+    }
+
+    HRESULT get(const std::string& member, const Index&, VARIANT* result,
+                long*) override {
+        long number = 0;
+        if (member == "min") {
+            number = model_.min();
+        } else if (member == "max") {
+            number = model_.max();
+        } else if (member == "value") {
+            number = model_.value();
+        } else if (member == "smallchange") {
+            number = model_.small_change();
+        } else if (member == "largechange") {
+            number = model_.large_change();
+        } else {
+            return S_FALSE;
+        }
+        result->vt = VT_I4;
+        result->lVal = number;
+        return S_OK;
+    }
+
+private:
+    ScrollBarModel model_;
+};
+
 // The behaviour of the class called `class_name`, none for most of them yet.
 inline std::unique_ptr<wfc::com::Behaviour> make_behaviour(
     const char* class_name) {
@@ -427,6 +494,9 @@ inline std::unique_ptr<wfc::com::Behaviour> make_behaviour(
     }
     if (_stricmp(class_name, "DTPicker") == 0) {
         return std::make_unique<DateTimePickerBehaviour>();
+    }
+    if (_stricmp(class_name, "FlatScrollBar") == 0) {
+        return std::make_unique<FlatScrollBarBehaviour>();
     }
     return nullptr;
 }

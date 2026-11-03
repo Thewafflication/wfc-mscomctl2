@@ -71,8 +71,14 @@ requirement:
       to an advised sink. Tested by `dtpicker_test` and through COM.
 - [ ] DTPicker callback fields, the drop-down calendar and the check box
       click through COM (they come from the window).
-- [ ] The other controls' behaviour (Animation, FlatScrollBar), then
-      wfc-mscomctl, wfc-comdlg32 and wfc-mswinsck.
+- [x] FlatScrollBar behaviour in the library (`scrollbar.hpp`: Min may be
+      above Max, Value inside the range or error 380, the position the user
+      moves to, SmallChange and LargeChange steps). The evaluator uses it for
+      the intrinsic HScrollBar and VScrollBar as well; the COM object keeps
+      the properties and raises `Change`. Tested by `scrollbar_test` and
+      through COM.
+- [ ] Animation behaviour (it is the system animation host; nothing to move
+      yet), then wfc-mscomctl, wfc-comdlg32 and wfc-mswinsck.
 
 ## 0.8: Microsoft ids verified
 
