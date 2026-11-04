@@ -231,6 +231,7 @@ static void wfc_check_updown(const wchar_t* dll_path) {
 /* The behaviour of a FlatScrollBar made through COM: the defaults of the
  * control, and a Value outside Min and Max refused with error 380. */
 static void wfc_check_flatscrollbar(const wchar_t* dll_path) {
+    typedef HRESULT(__stdcall * get_class_object)(REFCLSID, REFIID, void**);
     HMODULE module = LoadLibraryW(dll_path);
     get_class_object get;
     CLSID clsid;
@@ -273,8 +274,7 @@ static void wfc_check_flatscrollbar(const wchar_t* dll_path) {
     }
     control->lpVtbl->Release(control);
     factory->lpVtbl->Release(factory);
-    printf("FlatScrollBar: the range is kept through COM
-");
+    printf("FlatScrollBar: the range is kept through COM\n");
 }
 
 /* Calls a member of a late-bound control. `args` are in COM order (the last
