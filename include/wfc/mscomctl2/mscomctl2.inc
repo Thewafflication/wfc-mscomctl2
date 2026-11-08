@@ -421,7 +421,12 @@ void month_store(ControlObject& self,
             failure = NativeFailure{380, "Invalid property value"};
             return true;
         }
-        result = month_date_value(static_cast<double>(date));
+        // VB6 answers these dates with the time of day of now.
+        result = month_date_value(static_cast<double>(date) +
+                                  wfc::mscomctl2::calendar::time_of_day());
+    } else if (member == "startofweek") {
+        // A form file stores the value with flag bits above the day.
+        result = Value{static_cast<Integer>(model.first_day())};
     } else if (member == "daybold") {
         const double day =
             arguments.empty() ? 0.0 : month_argument(arguments[0].value);
@@ -642,6 +647,11 @@ void calendar_colors(ControlObject& self,
             !std::holds_alternative<std::string>(found->second)) {
             snapshot.calendar_colors.emplace_back(
                 index, static_cast<long>(as_double(found->second)));
+        } else if (const auto fallback =
+                       comctl_default(self.class_key, name)) {
+            // Not set: VB6's own colours (system colours), not the theme's.
+            snapshot.calendar_colors.emplace_back(
+                index, static_cast<long>(as_double(*fallback)));
         }
     }
 }

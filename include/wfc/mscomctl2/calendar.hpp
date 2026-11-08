@@ -112,6 +112,19 @@ struct Parts {
     return serial(local.tm_year + 1900, local.tm_mon + 1, local.tm_mday);
 }
 
+// The time of day now, as the fraction of a day a Date holds.
+[[nodiscard]] inline double time_of_day() {
+    const std::time_t now = std::time(nullptr);
+    std::tm local{};
+#ifdef _WIN32
+    localtime_s(&local, &now);
+#else
+    localtime_r(&now, &local);
+#endif
+    return (local.tm_hour * 3600.0 + local.tm_min * 60.0 + local.tm_sec) /
+           86400.0;
+}
+
 inline constexpr int kFirstYear = 1601;
 inline constexpr int kLastYear = 9999;
 
