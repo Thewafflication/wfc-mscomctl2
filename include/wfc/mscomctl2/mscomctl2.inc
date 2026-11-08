@@ -404,11 +404,11 @@ void month_store(ControlObject& self,
     } else if (member == "day") {
         result = Value{static_cast<Int16>(parts.day)};
     } else if (member == "month") {
-        result = Value{static_cast<Int16>(parts.month)};
+        result = Value{static_cast<Integer>(parts.month)};  // MonthConstants
     } else if (member == "year") {
         result = Value{static_cast<Int16>(parts.year)};
     } else if (member == "dayofweek") {
-        result = Value{static_cast<Int16>(parts.weekday)};
+        result = Value{static_cast<Integer>(parts.weekday)};  // DayConstants
     } else if (member == "week") {
         result = Value{static_cast<Int16>(model.week())};
     } else if (member == "visibledays") {
@@ -468,6 +468,27 @@ void month_store(ControlObject& self,
                                  ? model.set_sel_start(wanted)
                                  : model.set_sel_end(wanted);
         if (!outcome.valid) {
+            return invalid();
+        }
+        month_store(self, before, model, member);
+        return true;
+    }
+    if (member == "week" || member == "dayofweek") {
+        // Moves Value to that week of its year, or to that day of its week.
+        Value converted = value;
+        if (!coerce_row(in, self, member, converted, failure)) {
+            return true;
+        }
+        const long number = static_cast<long>(as_double(converted));
+        auto model = month_model(self);
+        const auto before = model;
+        const long date = model.value();
+        const long moved = member == "week"
+                               ? date + (number - model.week()) * 7
+                               : date + (number - model.parts().weekday);
+        if ((member == "week" && (number < 1 || number > 53)) ||
+            (member == "dayofweek" && (number < 1 || number > 7)) ||
+            !model.set_value(moved).valid) {
             return invalid();
         }
         month_store(self, before, model, member);
@@ -755,7 +776,7 @@ void picker_store(ControlObject& self,
         return true;
     }
     if (member == "format") {
-        result = Value{static_cast<Int16>(picker_format(self))};
+        result = Value{static_cast<Integer>(picker_format(self))};
         return true;
     }
     if (member == "mindate" || member == "maxdate") {

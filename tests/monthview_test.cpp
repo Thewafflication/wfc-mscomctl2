@@ -34,13 +34,17 @@ int main() {
     expect(calendar::days_in_month(1900, 2) == 28 &&
                calendar::days_in_month(2000, 2) == 29,
            "century leap years");
-    // January 1 is in week 1; with weeks from Sunday, 2000-01-02 starts week 2.
-    expect(calendar::week_of_year(calendar::serial(2000, 1, 1), 1) == 1,
+    // Week 1 is the first week of four days (as VB6 numbers them): 2000-01-01
+    // is in the last week of 1999, and with weeks from Sunday 2000-01-02
+    // starts week 1.
+    expect(calendar::week_of_year(calendar::serial(2000, 1, 1), 1) == 52,
+           "the last week of the year before");
+    expect(calendar::week_of_year(calendar::serial(2000, 1, 2), 1) == 1,
            "week 1");
-    expect(calendar::week_of_year(calendar::serial(2000, 1, 2), 1) == 2,
-           "week 2");
-    expect(calendar::week_of_year(calendar::serial(2000, 1, 3), 2) == 2,
-           "week 2 from Monday");
+    expect(calendar::week_of_year(calendar::serial(2000, 1, 3), 2) == 1,
+           "week 1 from Monday");
+    expect(calendar::week_of_year(calendar::serial(2026, 11, 7), 1) == 44,
+           "7 November 2026, as VB6 numbers it");
 
     const long day = calendar::serial(2024, 5, 15);  // a Wednesday
     MonthViewModel model{day};

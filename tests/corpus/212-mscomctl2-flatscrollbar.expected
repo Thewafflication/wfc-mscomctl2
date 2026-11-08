@@ -1,4 +1,4 @@
-start 20  10  100  32767  10  1  0  1 
+start 20  10  100  32767  10  1  1  1 
  380 Invalid property value
 change 50 
 FlatScrollBar 50 

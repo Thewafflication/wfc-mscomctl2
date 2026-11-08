@@ -68,15 +68,19 @@ int main() {
     expect(!model.set_value(-1).valid, "Value below Min is invalid");
     expect(model.set_value(5).changed && model.value() == 5, "Value 5");
     expect(!model.set_value(5).changed, "the same Value is no change");
-    expect(!model.set_max(-1).valid && model.max() == 10,
-           "Max below Min is invalid");
+    // VB6 takes a Max below Min (measured, control-probe-2).
+    expect(model.set_max(-1).valid && model.max() == -1,
+           "Max below Min is accepted");
     outcome = model.set_max(3);
-    expect(outcome.valid && outcome.changed && model.value() == 3,
+    expect(outcome.valid && model.max() == 3, "Max 3");
+    expect(model.set_value(3).valid, "Value 3");
+    outcome = model.set_max(2);
+    expect(outcome.valid && outcome.changed && model.value() == 2,
            "a narrower range brings Value inside");
-    outcome = model.set_min(3);
-    expect(outcome.valid && !outcome.changed && model.min() == 3,
+    outcome = model.set_min(2);
+    expect(outcome.valid && !outcome.changed && model.min() == 2,
            "Min up to Value leaves it");
-    expect(!model.set_min(4).valid, "Min above Max is invalid");
+    expect(model.set_min(4).valid, "Min above Max is accepted");
 
     if (failures == 0) {
         std::printf("updown: the model behaves\n");

@@ -4,14 +4,13 @@ change1 3
 value 3  3 
  2  3  3 
 high 380  3 
-min 380  1 
-up1 4 
-change1 4 
-up1 5 
 change1 5 
+min 0  7 
 up1 5 
-down1 4 
-change1 4 
+up1 5 
+up1 5 
+down1 7 
+change1 7 
 up2 0 
 change2 0 
 down2 2 

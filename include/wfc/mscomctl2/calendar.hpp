@@ -75,13 +75,29 @@ struct Parts {
     return result;
 }
 
-// The week of the year for weeks starting on `first_day` (1 = Sunday), week 1
-// being the one that holds January 1 (vbFirstJan1).
-[[nodiscard]] inline long week_of_year(const long date, const long first_day) {
-    const Parts of = parts(date);
-    const long jan1 = serial(of.year, 1, 1);
+// The first day of week 1 of `year` for weeks starting on `first_day` (1 =
+// Sunday), week 1 being the first week of at least four days of the year
+// (vbFirstFourDays; measured under VB6, which numbers 7 November 2026 as week
+// 44 while the weeks that hold January 1 would make it 45).
+[[nodiscard]] inline long first_week_start(const long year,
+                                           const long first_day) {
+    const long jan1 = serial(year, 1, 1);
     const long offset = (parts(jan1).weekday - first_day + 7) % 7;
-    return (date - (jan1 - offset)) / 7 + 1;
+    const long start = jan1 - offset;
+    return 7 - offset >= 4 ? start : start + 7;
+}
+
+// The week of the year for weeks starting on `first_day` (1 = Sunday).
+[[nodiscard]] inline long week_of_year(const long date, const long first_day) {
+    const long year = parts(date).year;
+    if (date >= first_week_start(year + 1, first_day)) {
+        return 1;
+    }
+    const long start = first_week_start(year, first_day);
+    if (date < start) {
+        return (date - first_week_start(year - 1, first_day)) / 7 + 1;
+    }
+    return (date - start) / 7 + 1;
 }
 
 // Today's date (the local one).

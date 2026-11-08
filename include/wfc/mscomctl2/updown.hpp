@@ -49,19 +49,14 @@ public:
     // Increment below 1 acts as 1 when the arrows are clicked.
     void set_increment(const long increment) { increment_ = increment; }
 
-    // Min and Max: the range must stay ordered, and Value is brought inside it.
+    // Min and Max take any number (measured under VB6: Max below Min is
+    // accepted); Value is brought inside the range.
     [[nodiscard]] Outcome set_min(const long minimum) {
-        if (minimum > max_) {
-            return {false, false, false};
-        }
         min_ = minimum;
         return clamp();
     }
 
     [[nodiscard]] Outcome set_max(const long maximum) {
-        if (maximum < min_) {
-            return {false, false, false};
-        }
         max_ = maximum;
         return clamp();
     }
@@ -104,7 +99,7 @@ public:
 private:
     [[nodiscard]] Outcome clamp() {
         const long before = value_;
-        value_ = std::min(std::max(value_, min_), max_);
+        value_ = std::min(std::max(value_, min_), std::max(min_, max_));
         return {true, value_ != before, false};
     }
 
