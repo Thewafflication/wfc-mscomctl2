@@ -218,10 +218,16 @@ static void wfc_check_updown(const wchar_t* dll_path) {
         wfc_check_fail("Value was not brought inside a narrower range in",
                        dll_path);
     }
-    if (wfc_updown_put(control, L"Min", 50, &exception) != DISP_E_EXCEPTION) {
-        wfc_check_fail("Min above Max was accepted in", dll_path);
+    /* Measured under VB6: Min above Max is accepted. */
+    memset(&exception, 0, sizeof(exception));
+    if (wfc_updown_put(control, L"Min", 50, &exception) != S_OK) {
+        wfc_check_fail("Min above Max was refused in", dll_path);
     }
     wfc_free_exception(&exception);
+    /* Back to a sensible range for the event checks. */
+    wfc_updown_put(control, L"Min", 0, NULL);
+    wfc_updown_put(control, L"Max", 40, NULL);
+    wfc_updown_put(control, L"Value", 40, NULL);
     wfc_check_updown_events(control, dll_path);
     control->lpVtbl->Release(control);
     factory->lpVtbl->Release(factory);
