@@ -31,7 +31,9 @@ jobs:
       - name: Configure
         shell: pwsh
         run: |
-          $extra = if ('${{ matrix.shared }}' -eq 'true') { '-DWFC_MSCOMCTL2_SHARED=ON' } else { '-DWFC_MSCOMCTL2_SHARED=OFF' }
+          $on = '${{ matrix.shared }}' -eq 'true'
+          $shared = if ($on) { 'ON' } else { 'OFF' }
+          $extra = "-DWFC_MSCOMCTL2_SHARED=$shared"
           cmake -S . -B out/build -A ${{ matrix.platform }} $extra
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
@@ -67,9 +69,11 @@ jobs:
           fi
           sudo apt-get update
           if [ "${{ matrix.arch }}" = "x86" ]; then
-            sudo apt-get install -y wine64-tools libwine-dev:i386 gcc-multilib g++-multilib cmake ninja-build
+            sudo apt-get install -y wine64-tools libwine-dev:i386 \
+              gcc-multilib g++-multilib cmake ninja-build
           else
-            sudo apt-get install -y wine64-tools libwine-dev wine64 cmake ninja-build
+            sudo apt-get install -y wine64-tools libwine-dev wine64 \
+              cmake ninja-build
           fi
 
       - name: Configure
@@ -93,7 +97,8 @@ jobs:
         if: matrix.arch != 'arm64'
         run: |
           set -o pipefail
-          ctest --test-dir out/winelib --output-on-failure 2>&1 | tee out/test.txt
+          ctest --test-dir out/winelib --output-on-failure 2>&1 |
+            tee out/test.txt
 
       - name: Screenshot of the session
         if: always()
@@ -110,7 +115,9 @@ jobs:
               echo '(the tests are not run on arm64: Wine hangs there)'
             fi
           } > out/session.txt
-          python3 scripts/render_terminal.py out/session.txt docs/images/linux-winelib-${{ matrix.arch }}.png "wfc-mscomctl2: Linux (Winelib) ${{ matrix.arch }}"
+          python3 scripts/render_terminal.py out/session.txt \
+            docs/images/linux-winelib-${{ matrix.arch }}.png \
+            "wfc-mscomctl2: Linux (Winelib) ${{ matrix.arch }}"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -159,18 +166,19 @@ jobs:
           name: webassembly
           path: docs/images/webassembly.png
 
-  wsp-style:
-    name: WSP source style (report)
+  lint:
+    name: Lint (WSP source style, clang-format, gersemi)
     runs-on: windows-2022
-    continue-on-error: true
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Check the source style
+      - name: Install the pinned tools
         shell: pwsh
-        run: |
-          & ./wsp/tools/Test-SourceStyle.ps1 -RepositoryRoot $PWD `
-            -SourcePath @('src', 'include', 'tests', 'CMakeLists.txt')
+        run: python -m pip install --requirement requirements-dev.txt
+
+      - name: Lint
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/Invoke-Lint.ps1

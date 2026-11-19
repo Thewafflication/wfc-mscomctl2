@@ -1,0 +1,18 @@
+# @file .pre-commit-config.yaml
+# @brief Library commit gate (WSP-CHECK-0001): the lint stage.
+# @note Build and test stages are an open item in docs/WSP-ADOPTION.md. The
+#   hook never installs tools or modifies sources (WSP-CHECK-0007).
+minimum_pre_commit_version: "4.6.2"
+default_install_hook_types: [pre-commit]
+default_stages: [pre-commit]
+fail_fast: true
+repos:
+  - repo: local
+    hooks:
+      - id: lint
+        name: Library lint
+        entry: pwsh -NoProfile -File scripts/Invoke-Lint.ps1
+        language: system
+        always_run: true
+        pass_filenames: false
+        require_serial: true
