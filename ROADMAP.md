@@ -111,6 +111,6 @@ requirement:
 
 - [x] WSP baseline (see [docs/WSP-ADOPTION.md](docs/WSP-ADOPTION.md)).
 - [x] The `wsp` submodule (pinned like the other libraries).
-- [ ] 80-column source style for the library sources (the generated tables are
-      exempt).
+- [x] 80-column source style, clang-format and gersemi, checked by
+      `scripts/Invoke-Lint.ps1` and a blocking CI job.
 - [ ] Requirements and traceability (`requirements/`).

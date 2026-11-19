@@ -12,8 +12,8 @@
 
 **Pinned commit:** `f009399dd1406219571ac978bfee85e85bbdfeac`
 
-**Status:** Adopted; the common practices are in place and the open items are
-listed below
+**Status:** In adoption; the style and lint baseline is in place, the gaps
+are listed below
 
 The library is one of the WFC libraries and follows the WFC adoption record
 (`planning/wsp-adoption-record.md` in
@@ -31,11 +31,40 @@ library repository itself carries.
 | Windows code signing and Defender | Deferred | Until the first release |
 | Documentation | Yes | `README.md`, `ROADMAP.md`, `COMPATIBILITY.md` |
 
+## Gap analysis (WSP 1.4.0)
+
+WSP asks of a project: the style baseline and a commit gate, controlled
+requirements with stable identifiers, test cases traced to them, a recorded
+adoption (this file), and a controlled release. Status as of this branch:
+
+| Item | WSP source | Status | Action |
+| --- | --- | --- | --- |
+| WSP submodule pinned | `architecture/adr-0001`, requirements README | Done: 1.4.0, same as WFC | Move with WFC when WSP is updated |
+| Formatter configs | `style/source-style.md`, `templates/source-style-configurations.md` (WSP-LANG-0002, -0010) | Done: `.clang-format`, `.gersemirc`, `.editorconfig`; the sources already conform | None |
+| Physical style (80 columns, LF, UTF-8) | WSP-STYLE-0001 to 0004 | Done: `Test-SourceStyle.ps1` passes on 34 files (`tests/corpus` is out of scope) | None |
+| Lint stage and commit gate | `processes/commit-checks.md` (WSP-CHECK-0001 to 0008) | Lint done (`scripts/Invoke-Lint.ps1`, `.pre-commit-config.yaml`, blocking CI job); build and test stages missing | Add `Invoke-Build.ps1` and `Invoke-Tests.ps1` and their hooks; run x64 only locally |
+| Pinned tools | WSP-CHECK-0007 | Done: `requirements-dev.txt` | None |
+| PowerShell and Python analysis | WSP-LANG-0007 | Not done: no PSScriptAnalyzer settings; two Python scripts | Add `PSScriptAnalyzerSettings.psd1` and a lint step when scripts grow |
+| Requirement format | `requirements/requirements-management.md`, `style/requirements-writing.md` | Partial: five `REQ-03xx` files, status Proposed, no per-requirement verification link to a test-case ID | Decide numbering (below); add the Verification and Relationships sections |
+| Test cases with stable IDs | `testing/test-strategy.md`, `style/artifact-identifiers.md` | Partial: CTest names `TC-MP0010-*` (a milestone scheme, not `TC-NNNN`); no test-case definitions | Decide the TC scheme; write case definitions (`tc-NNNN-*.tex`) or map CTest names |
+| Traceability check | `tools/Test-Traceability.ps1`, WSP-TEST traceability | Not done (roadmap WSP track) | After the ID decisions, run it in lint |
+| Test evidence and reports | `tools/Test-TestEvidence.ps1`, `New-TestReport.ps1` | Not done | Later, with the first release |
+| Docs structure | `documentation/`, `style/documentation-style.md` | Partial: README, ROADMAP, COMPATIBILITY, `docs/`; no architecture or design records | Add an ADR for the table generation and the standalone/WFC split when needed |
+| Source documentation | `style/source-documentation.md` | Not checked: no Doxygen | Decide whether C++ sources need `@file` and `@brief` blocks |
+| Static analysis | `style/static-analysis.md` | Not done | Optional: clang-tidy via `wsp/tools/cmake` |
+| Hardening and version resource | WSP-SEC-0015, `style/windows-version-resources.md` | Done (`WspBuild.cmake`, `version.rc.in`) | Add `Test-PeHardening.ps1` to the build stage |
+| Release and versioning | `processes/release-readiness-template.md`, `security/windows-code-signing-and-defender.md` | Partial: `VERSION`, shared release workflow; no readiness record, no signing | Signing planned for the first release |
+| AGENTS.md | WFC model | Done | None |
+
 ## Open items
 
 | Item | Disposition |
 | --- | --- |
-| 80-column style (WSP-STYLE-0001) | CI reports it; the library sources are not yet wrapped (the generated tables are exempt) |
-| Requirements | Adopted: `requirements/` (moved from WFC) |
-| Traceability check | Planned (roadmap, WSP track) |
+| Build and test hooks | Open: see the lint row above |
+| Requirement and test-case numbering | Open: owner decision |
+| Traceability check | Planned (roadmap, WSP track); needs the numbering first |
 | Signing | Planned for the first release |
+
+The earlier open item "80-column style" is closed: the sources, including the
+generated tables, already satisfy it; the only long lines were in `ci.yml` and
+two Python scripts, now wrapped.
