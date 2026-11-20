@@ -1,4 +1,4 @@
-# REQ-0308 — UpDown control (`MSComCtl2.UpDown`)
+# REQ-0001 — UpDown control (`MSComCtl2.UpDown`)
 
 **Content type:** Project requirement
 
@@ -10,7 +10,7 @@ control)
 - **Class.** `Begin MSComCtl2.UpDown` forms (and `Dim u As MSComCtl2.UpDown`)
   resolve to a native control; no OCX is needed. The `Object=` line of
   `mscomct2.ocx` is accepted. Every member of the type library of the
-  installed component exists (`lib/wfc-mscomctl2/src/mscomctl2_tables.cpp`).
+  installed component exists (`src/mscomctl2_tables.cpp`).
 - **Defaults.** `Min` 0, `Max` 10, `Value` 0, `Increment` 1, `Wrap` False,
   `Orientation` 0 (`cc2OrientationVertical`), `Acceleration` 0, `AutoBuddy` and
   `SyncBuddy` False. `Value` is the default property.
@@ -50,5 +50,19 @@ control.
 
 ## Verification
 
-Corpus `211-mscomctl2-updown` (properties, range errors, clicks, wrap and the
-event order) and `213-mscomctl2-updown-buddy` (the buddy); the example `examples/updown` shows both orientations.
+Method: automated test, and demonstration through the example.
+
+- [TC-0002](../tests/tc-0002-updown-model.tex): the model of the UpDown
+  (arrow steps, `Wrap`, `Increment`, range rules).
+- [TC-0007](../tests/tc-0007-corpus-updown.tex): corpus
+  `211-mscomctl2-updown` (properties, range errors, clicks, wrap and the
+  event order).
+- [TC-0009](../tests/tc-0009-corpus-updown-buddy.tex): corpus
+  `213-mscomctl2-updown-buddy` (the buddy).
+- [TC-0006](../tests/tc-0006-dll.tex): an UpDown made through COM in the
+  shared build.
+- Demonstration: `examples/updown` shows both orientations.
+
+## Relationships
+
+Related: REQ-0006 (the member table), REQ-0007 (the shared library).

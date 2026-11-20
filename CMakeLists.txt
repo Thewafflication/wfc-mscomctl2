@@ -147,10 +147,10 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
   if(COMMAND wsp_enable_hardening)
     wsp_enable_hardening(mscomctl2_tables_test)
   endif()
-  add_test(NAME TC-MP0010-mscomctl2-tables COMMAND mscomctl2_tables_test)
+  add_test(NAME TC-0001-tables COMMAND mscomctl2_tables_test)
   set_tests_properties(
-    TC-MP0010-mscomctl2-tables
-    PROPERTIES LABELS "unit;mp-0010;mscomctl2" TIMEOUT 120
+    TC-0001-tables
+    PROPERTIES LABELS "unit;mscomctl2" TIMEOUT 120
   )
 
   add_executable(mscomctl2_updown_test tests/updown_test.cpp)
@@ -162,10 +162,10 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
   if(COMMAND wsp_enable_hardening)
     wsp_enable_hardening(mscomctl2_updown_test)
   endif()
-  add_test(NAME TC-MP0010-mscomctl2-updown COMMAND mscomctl2_updown_test)
+  add_test(NAME TC-0002-updown-model COMMAND mscomctl2_updown_test)
   set_tests_properties(
-    TC-MP0010-mscomctl2-updown
-    PROPERTIES LABELS "unit;mp-0010;mscomctl2" TIMEOUT 120
+    TC-0002-updown-model
+    PROPERTIES LABELS "unit;mscomctl2" TIMEOUT 120
   )
 
   add_executable(mscomctl2_scrollbar_test tests/scrollbar_test.cpp)
@@ -177,10 +177,10 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
   if(COMMAND wsp_enable_hardening)
     wsp_enable_hardening(mscomctl2_scrollbar_test)
   endif()
-  add_test(NAME TC-MP0010-mscomctl2-scrollbar COMMAND mscomctl2_scrollbar_test)
+  add_test(NAME TC-0003-scrollbar-model COMMAND mscomctl2_scrollbar_test)
   set_tests_properties(
-    TC-MP0010-mscomctl2-scrollbar
-    PROPERTIES LABELS "unit;mp-0010;mscomctl2" TIMEOUT 120
+    TC-0003-scrollbar-model
+    PROPERTIES LABELS "unit;mscomctl2" TIMEOUT 120
   )
 
   add_executable(mscomctl2_monthview_test tests/monthview_test.cpp)
@@ -192,10 +192,10 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
   if(COMMAND wsp_enable_hardening)
     wsp_enable_hardening(mscomctl2_monthview_test)
   endif()
-  add_test(NAME TC-MP0010-mscomctl2-monthview COMMAND mscomctl2_monthview_test)
+  add_test(NAME TC-0004-monthview-model COMMAND mscomctl2_monthview_test)
   set_tests_properties(
-    TC-MP0010-mscomctl2-monthview
-    PROPERTIES LABELS "unit;mp-0010;mscomctl2" TIMEOUT 120
+    TC-0004-monthview-model
+    PROPERTIES LABELS "unit;mscomctl2" TIMEOUT 120
   )
 
   add_executable(mscomctl2_dtpicker_test tests/dtpicker_test.cpp)
@@ -207,10 +207,10 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
   if(COMMAND wsp_enable_hardening)
     wsp_enable_hardening(mscomctl2_dtpicker_test)
   endif()
-  add_test(NAME TC-MP0010-mscomctl2-dtpicker COMMAND mscomctl2_dtpicker_test)
+  add_test(NAME TC-0005-dtpicker-model COMMAND mscomctl2_dtpicker_test)
   set_tests_properties(
-    TC-MP0010-mscomctl2-dtpicker
-    PROPERTIES LABELS "unit;mp-0010;mscomctl2" TIMEOUT 120
+    TC-0005-dtpicker-model
+    PROPERTIES LABELS "unit;mscomctl2" TIMEOUT 120
   )
 
   if(WIN32 AND WFC_MSCOMCTL2_SHARED)
@@ -227,19 +227,73 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
       wsp_enable_hardening(mscomctl2_dll_test)
     endif()
     add_test(
-      NAME TC-MP0010-mscomctl2-dll
+      NAME TC-0006-dll
       COMMAND
         mscomctl2_dll_test "$<TARGET_FILE:wfc_mscomctl2>"
         "${WFC_MSCOMCTL2_VERSION}" "${WFC_LIB_TARGET}"
     )
     set_tests_properties(
-      TC-MP0010-mscomctl2-dll
+      TC-0006-dll
       PROPERTIES
-        LABELS "integration;mp-0010;mscomctl2"
+        LABELS "integration;mscomctl2"
         RESOURCE_LOCK registry
         SKIP_RETURN_CODE 77
     )
   endif()
+endif()
+
+# The corpus programs of tests/corpus run through the wfc executable of WFC
+# (WFC_EXE). WFC itself runs them when it mounts the library, so this is the
+# standalone build only; without WFC_EXE the cases report as skipped.
+if(
+  BUILD_TESTING
+  AND WFC_BUILD_TESTS
+  AND CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR
+)
+  set(WFC_EXE "" CACHE FILEPATH "wfc executable that runs the corpus programs")
+  set(
+    wfc_corpus_cases
+    "0007|corpus-updown|211-mscomctl2-updown"
+    "0008|corpus-flatscrollbar|212-mscomctl2-flatscrollbar"
+    "0009|corpus-updown-buddy|213-mscomctl2-updown-buddy"
+    "0010|corpus-monthview|214-mscomctl2-monthview"
+    "0011|corpus-dtpicker|215-mscomctl2-dtpicker"
+    "0012|corpus-animation|217-mscomctl2-animation"
+    "0013|corpus-getdaybold|218-mscomctl2-getdaybold"
+    "0014|corpus-dtpicker-callback|219-mscomctl2-dtpicker-callback"
+    "0015|corpus-monthview-hittest|220-mscomctl2-monthview-hittest"
+    "0016|corpus-calendar-colors|221-mscomctl2-calendar-colors"
+  )
+  foreach(wfc_corpus_case IN LISTS wfc_corpus_cases)
+    string(REPLACE "|" ";" wfc_corpus_parts "${wfc_corpus_case}")
+    list(GET wfc_corpus_parts 0 wfc_corpus_id)
+    list(GET wfc_corpus_parts 1 wfc_corpus_slug)
+    list(GET wfc_corpus_parts 2 wfc_corpus_name)
+    set(wfc_corpus_dir "${CMAKE_CURRENT_SOURCE_DIR}/tests/corpus")
+    set(wfc_corpus_debug "")
+    if(EXISTS "${wfc_corpus_dir}/${wfc_corpus_name}.debug")
+      set(
+        wfc_corpus_debug
+        "-DDEBUG_EXPECTED=${wfc_corpus_dir}/${wfc_corpus_name}.debug"
+      )
+    endif()
+    add_test(
+      NAME TC-${wfc_corpus_id}-${wfc_corpus_slug}
+      COMMAND
+        "${CMAKE_COMMAND}" "-DWFC=${WFC_EXE}"
+        "-DINPUT=${wfc_corpus_dir}/${wfc_corpus_name}.vbp"
+        "-DEXPECTED=${wfc_corpus_dir}/${wfc_corpus_name}.expected"
+        ${wfc_corpus_debug} -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/run_corpus_case.cmake"
+    )
+    set_tests_properties(
+      TC-${wfc_corpus_id}-${wfc_corpus_slug}
+      PROPERTIES
+        LABELS "corpus;mscomctl2"
+        TIMEOUT 120
+        SKIP_REGULAR_EXPRESSION "wfc executable not set"
+    )
+  endforeach()
 endif()
 
 # --- WebAssembly demo ---------------------------------------------------------

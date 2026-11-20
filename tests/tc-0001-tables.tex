@@ -1,0 +1,49 @@
+% TC-0001 test-case definition (WSP test-case template).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+
+% Compile from the repository root so this path resolves to the pinned WSP
+% submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0001}
+\def\TCTitle{Member table of the five classes}
+\def\TCPurpose{%
+  Verify that the member table lists the five classes of MSComCtl2 in order, that every class lists named members of a known kind, and that every event is listed as a method.}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{REQ-0006}
+\def\TCDesignRef{Not applicable.}
+\def\TCFeatureRef{\texttt{src/mscomctl2\_tables.cpp}; \texttt{include/wfc/mscomctl2/mscomctl2.hpp}; \texttt{tests/mscomctl2\_tables\_test.cpp}.}
+\def\TCTestTechnique{%
+  Structural check of generated data: every class, member and event row is visited.}
+
+\def\TCPreconditions{%
+  The library is configured and built with \texttt{cmake -S . -B out/build} and \texttt{cmake --build out/build}.}
+\def\TCEnvironment{%
+  Windows (CI: x86, x64 and ARM64, static and shared build; Linux Winelib and WebAssembly are experimental). CMake 3.28 or later, CTest, a C++20 compiler; Debug configuration locally (x64).}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  The table returned by \texttt{wfc::ui::mscomctl2\_classes()}.}
+\def\TCInitialState{%
+  No output of an earlier run is used. CTest test name: \texttt{TC-0001-tables}.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item Run \texttt{mscomctl2\_tables\_test} through CTest.
+    \item The program compares the number and the names of the classes with \texttt{Animation, UpDown, MonthView, DTPicker, FlatScrollBar} in that order.
+    \item For every class it checks that the class has members, that every member has a non-empty name and a kind in \texttt{g, l, s, m}, and that every event has the kind \texttt{m}.
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  The program exits with status 0 and prints \texttt{mscomctl2: 5 classes}. Any violation prints a line starting with \texttt{FAIL:} and gives a nonzero exit status.}
+\def\TCPostConditions{%
+  No files are written.}
+
+\TCTemplate
+
+\end{document}

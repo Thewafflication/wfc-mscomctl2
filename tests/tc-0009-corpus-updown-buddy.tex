@@ -1,0 +1,49 @@
+% TC-0009 test-case definition (WSP test-case template).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+
+% Compile from the repository root so this path resolves to the pinned WSP
+% submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0009}
+\def\TCTitle{Corpus 213: UpDown buddy control}
+\def\TCPurpose{%
+  Verify that the buddy of an UpDown (a text box) follows Value, that Value reads the number the buddy holds kept inside Min and Max, that a buddy without a number leaves Value as it is, that AutoBuddy finds the preceding control, and that SyncBuddy False stops the following.}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{REQ-0001}
+\def\TCDesignRef{Not applicable.}
+\def\TCFeatureRef{\texttt{tests/corpus/213-mscomctl2-updown-buddy.vbp}, \texttt{.frm}, \texttt{.ui}, \texttt{.debug} and \texttt{.expected}.}
+\def\TCTestTechnique{%
+  Scenario test: a program that prints what it observes, compared with a stored transcript.}
+
+\def\TCPreconditions{%
+  A \texttt{wfc} executable that includes this library (WFC version 0.8.28 or later) and the files of the case in \texttt{tests/corpus}.}
+\def\TCEnvironment{%
+  Windows x64. The \texttt{wfc} executable of WFC, given to CMake as \texttt{WFC\_EXE}; the program is run by the interpreter (\texttt{--interpret}) with the system common controls. The case is registered only when \texttt{WFC\_EXE} is set; without it CTest reports the case as skipped.}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  Text1 set to 8, 99 and abc; UpDown1 Value 2; UpDown2 Value 20 and 30 with SyncBuddy off; the script lines \texttt{up} and \texttt{down} on UpDown1 and \texttt{up} on UpDown2.}
+\def\TCInitialState{%
+  No output of an earlier run is used. CTest test name: \texttt{TC-0009-corpus-updown-buddy}.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item Run \texttt{wfc --interpret tests/corpus/213-mscomctl2-updown-buddy.vbp}. Form\_Load prints the first values of both pairs, types 8, 99 and abc into Text1 and prints Value each time, then sets the values of both UpDown controls.
+    \item The script clicks the arrows of UpDown1 and the up arrow of UpDown2, then closes the form.
+    \item Compare the Immediate-window output with \texttt{213-mscomctl2-updown-buddy.debug} and standard output with the empty \texttt{213-mscomctl2-updown-buddy.expected}.
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  Typing 8 gives Value 8, 99 is kept at 9 (Max), abc leaves 9; the text shows 2 after Value 2; the AutoBuddy text shows 20; after SyncBuddy is False the text stays 20 when Value is 30. Both outputs equal the stored files.}
+\def\TCPostConditions{%
+  No files are written; the interpreter's windows are closed by the script.}
+
+\TCTemplate
+
+\end{document}

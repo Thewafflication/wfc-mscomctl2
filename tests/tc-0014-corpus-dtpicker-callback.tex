@@ -1,0 +1,49 @@
+% TC-0014 test-case definition (WSP test-case template).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+
+% Compile from the repository root so this path resolves to the pinned WSP
+% submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0014}
+\def\TCTitle{Corpus 219: DTPicker callback fields}
+\def\TCPurpose{%
+  Verify the callback field of a custom format: the Format event gives its text, FormatSize its width, CallbackKeyDown runs when a key is pressed in it, and setting CallbackDate changes Value and raises Change.}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{REQ-0004}
+\def\TCDesignRef{Not applicable.}
+\def\TCFeatureRef{\texttt{tests/corpus/219-mscomctl2-dtpicker-callback.vbp}, \texttt{.frm}, \texttt{.ui}, \texttt{.debug} and \texttt{.expected}.}
+\def\TCTestTechnique{%
+  Scenario test: a program that prints what it observes, compared with a stored transcript.}
+
+\def\TCPreconditions{%
+  A \texttt{wfc} executable that includes this library (WFC version 0.8.28 or later) and the files of the case in \texttt{tests/corpus}.}
+\def\TCEnvironment{%
+  Windows x64. The \texttt{wfc} executable of WFC, given to CMake as \texttt{WFC\_EXE}; the program is run by the interpreter (\texttt{--interpret}) with the system common controls. The case is registered only when \texttt{WFC\_EXE} is set; without it CTest reports the case as skipped.}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  The script lines \texttt{format X 2026-10-31 12:00:00}, \texttt{formatsize X}, \texttt{keydown X 38 0 2026-10-31 12:00:00} and \texttt{keydown X 40 0 2026-11-07 12:00:00}.}
+\def\TCInitialState{%
+  No output of an earlier run is used. CTest test name: \texttt{TC-0014-corpus-dtpicker-callback}.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item Run \texttt{wfc --interpret tests/corpus/219-mscomctl2-dtpicker-callback.vbp}.
+    \item The script asks for the text and the size of the field X, presses the key 38 (up) and then 40 (down); the handlers move CallbackDate by seven days.
+    \item Compare the Immediate-window output with \texttt{219-mscomctl2-dtpicker-callback.debug} and standard output with the empty \texttt{219-mscomctl2-dtpicker-callback.expected}.
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  Format prints the field and its week number (44), FormatSize sets 24, key 38 gives \texttt{change2026-11-07} and key 40 gives \texttt{change2026-10-31}. Both outputs equal the stored files.}
+\def\TCPostConditions{%
+  No files are written; the interpreter's windows are closed by the script.}
+
+\TCTemplate
+
+\end{document}

@@ -45,9 +45,9 @@ adoption (this file), and a controlled release. Status as of this branch:
 | Lint stage and commit gate | `processes/commit-checks.md` (WSP-CHECK-0001 to 0008) | Lint done (`scripts/Invoke-Lint.ps1`, `.pre-commit-config.yaml`, blocking CI job); build and test stages missing | Add `Invoke-Build.ps1` and `Invoke-Tests.ps1` and their hooks; run x64 only locally |
 | Pinned tools | WSP-CHECK-0007 | Done: `requirements-dev.txt` | None |
 | PowerShell and Python analysis | WSP-LANG-0007 | Not done: no PSScriptAnalyzer settings; two Python scripts | Add `PSScriptAnalyzerSettings.psd1` and a lint step when scripts grow |
-| Requirement format | `requirements/requirements-management.md`, `style/requirements-writing.md` | Partial: five `REQ-03xx` files, status Proposed, no per-requirement verification link to a test-case ID | Decide numbering (below); add the Verification and Relationships sections |
-| Test cases with stable IDs | `testing/test-strategy.md`, `style/artifact-identifiers.md` | Partial: CTest names `TC-MP0010-*` (a milestone scheme, not `TC-NNNN`); no test-case definitions | Decide the TC scheme; write case definitions (`tc-NNNN-*.tex`) or map CTest names |
-| Traceability check | `tools/Test-Traceability.ps1`, WSP-TEST traceability | Not done (roadmap WSP track) | After the ID decisions, run it in lint |
+| Requirement format | `requirements/requirements-management.md`, `style/requirements-writing.md` | Done: seven `REQ-NNNN` files (`REQ-0001` to `REQ-0007`) in the library's own namespace, each with Verification (test-case links) and Relationships; the status stays Proposed until the controls are probed against VB6 | Move to Approved with the first release |
+| Test cases with stable IDs | `testing/test-strategy.md`, `style/artifact-identifiers.md` | Done: sixteen cases `TC-0001` to `TC-0016` (CTest `TC-NNNN-<name>`, `tests/tc-NNNN-*.tex`, `tests/run-tc-NNNN.ps1`); the old WFC identifiers are in [id-map.md](id-map.md) | None |
+| Traceability check | `tools/Test-Traceability.ps1`, WSP-TEST traceability | Done: passes for 7 requirements, 16 specifications and 16 runners; run by `scripts/Invoke-Lint.ps1` | None |
 | Test evidence and reports | `tools/Test-TestEvidence.ps1`, `New-TestReport.ps1` | Not done | Later, with the first release |
 | Docs structure | `documentation/`, `style/documentation-style.md` | Partial: README, ROADMAP, COMPATIBILITY, `docs/`; no architecture or design records | Add an ADR for the table generation and the standalone/WFC split when needed |
 | Source documentation | `style/source-documentation.md` | Not checked: no Doxygen | Decide whether C++ sources need `@file` and `@brief` blocks |
@@ -61,8 +61,8 @@ adoption (this file), and a controlled release. Status as of this branch:
 | Item | Disposition |
 | --- | --- |
 | Build and test hooks | Open: see the lint row above |
-| Requirement and test-case numbering | Open: owner decision |
-| Traceability check | Planned (roadmap, WSP track); needs the numbering first |
+| Requirement and test-case numbering | Closed: `REQ-NNNN` and `TC-NNNN` from 0001 in this repository (`docs/id-map.md`) |
+| Traceability check | Closed: part of the lint stage |
 | Signing | Planned for the first release |
 
 The earlier open item "80-column style" is closed: the sources, including the

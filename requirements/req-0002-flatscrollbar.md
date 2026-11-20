@@ -1,4 +1,4 @@
-# REQ-0309 — FlatScrollBar control (`MSComCtl2.FlatScrollBar`)
+# REQ-0002 — FlatScrollBar control (`MSComCtl2.FlatScrollBar`)
 
 **Content type:** Project requirement
 
@@ -11,7 +11,7 @@ control and the intrinsic scroll bars)
   MSComCtl2.FlatScrollBar`) resolve to a native control; no OCX is needed. Every
   member of the type library of the installed component exists.
 - **Scroll bar behaviour.** The control behaves as the intrinsic `HScrollBar`
-  and `VScrollBar` (REQ-0154 and the form-scroll-bar tests): `Value` is the
+  and `VScrollBar` (WFC REQ-0154 and the form-scroll-bar tests): `Value` is the
   default property and must lie between `Min` and `Max` (error 380 "Invalid
   property value" otherwise; `Min` may be above `Max`); `Change` is raised when
   `Value` changes; the user dragging the thumb raises `Scroll` and `Change`, a
@@ -30,4 +30,17 @@ control and the intrinsic scroll bars)
 
 ## Verification
 
-Corpus `212-mscomctl2-flatscrollbar`; the example `examples/flatscrollbar`.
+Method: automated test, and demonstration through the example.
+
+- [TC-0003](../tests/tc-0003-scrollbar-model.tex): the model of the scroll
+  bar (defaults, range, steps, a reversed range).
+- [TC-0008](../tests/tc-0008-corpus-flatscrollbar.tex): corpus
+  `212-mscomctl2-flatscrollbar`.
+- [TC-0006](../tests/tc-0006-dll.tex): a FlatScrollBar made through COM in
+  the shared build.
+- Demonstration: `examples/flatscrollbar`.
+
+## Relationships
+
+Related: REQ-0006 (the member table), REQ-0007 (the shared library). The
+intrinsic scroll bars are specified in the WFC repository (WFC REQ-0154).

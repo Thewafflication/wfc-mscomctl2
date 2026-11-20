@@ -1,0 +1,49 @@
+% TC-0008 test-case definition (WSP test-case template).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+
+% Compile from the repository root so this path resolves to the pinned WSP
+% submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0008}
+\def\TCTitle{Corpus 212: FlatScrollBar defaults, range, events and scripted scrolling}
+\def\TCPurpose{%
+  Verify the form-file values and the range of two FlatScrollBar controls, error 380 for a Value outside the range, Change and Scroll, and the scripted scroll and scrollby actions.}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{REQ-0002}
+\def\TCDesignRef{Not applicable.}
+\def\TCFeatureRef{\texttt{tests/corpus/212-mscomctl2-flatscrollbar.vbp}, \texttt{.frm}, \texttt{.ui}, \texttt{.debug} and \texttt{.expected}.}
+\def\TCTestTechnique{%
+  Scenario test: a program that prints what it observes, compared with a stored transcript.}
+
+\def\TCPreconditions{%
+  A \texttt{wfc} executable that includes this library (WFC version 0.8.28 or later) and the files of the case in \texttt{tests/corpus}.}
+\def\TCEnvironment{%
+  Windows x64. The \texttt{wfc} executable of WFC, given to CMake as \texttt{WFC\_EXE}; the program is run by the interpreter (\texttt{--interpret}) with the system common controls. The case is registered only when \texttt{WFC\_EXE} is set; without it CTest reports the case as skipped.}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  Value 500 and 50; the script lines \texttt{scroll Flat1 70}, \texttt{scrollby Flat1 -5}, \texttt{scroll Flat2 99999} and \texttt{scroll Flat1 70}.}
+\def\TCInitialState{%
+  No output of an earlier run is used. CTest test name: \texttt{TC-0008-corpus-flatscrollbar}.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item Run \texttt{wfc --interpret tests/corpus/212-mscomctl2-flatscrollbar.vbp}. Form\_Load prints the start values, sets Value 500 (error) and Value 50, and prints the type name and the default property.
+    \item The script drags Flat1 to 70, scrolls it by -5, drags Flat2 to 99999 and Flat1 to 70 again, then closes the form.
+    \item Compare standard output (the form's Print) with \texttt{212-mscomctl2-flatscrollbar.expected}; there is no Immediate-window file for this case.
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  The start line shows the values of the form file (Value 20, Min 10, Max 100 for Flat1, Max 32767 for Flat2, LargeChange 10, SmallChange 1); Value 500 gives \texttt{380 Invalid property value}; setting 50 prints \texttt{change 50}; a drag to 70 prints \texttt{scroll 70} and \texttt{change 70}, a scroll by -5 prints only \texttt{change 65}, and Flat2 stops at 32767 (\texttt{change2 32767}). The output equals the stored file.}
+\def\TCPostConditions{%
+  No files are written; the interpreter's windows are closed by the script.}
+
+\TCTemplate
+
+\end{document}

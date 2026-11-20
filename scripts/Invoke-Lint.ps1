@@ -6,6 +6,7 @@ Checks the owned source and configuration scope:
 - WSP physical style (80 columns, UTF-8, whitespace, final newline);
 - clang-format check mode for C++ (WSP-LANG-0002);
 - gersemi check mode for CMake (WSP-LANG-0010);
+- requirement and test-case traceability (wsp/tools/Test-Traceability.ps1);
 - pre-commit configuration validity.
 Stops at the first failing check and exits nonzero. Changes no files.
 tests/corpus holds VB programs and expected output, which are not source
@@ -68,6 +69,13 @@ try {
     } else {
         Invoke-CheckedCommand $gersemi $check
     }
+
+    Write-Stage '[lint] requirement and test-case traceability'
+    Invoke-CheckedCommand pwsh @('-NoProfile', '-File',
+        './wsp/tools/Test-Traceability.ps1', '-RepositoryRoot', $root,
+        '-RequirementsPath', 'requirements',
+        '-TestSpecificationsPath', 'tests',
+        '-TestImplementationsPath', 'tests')
 
     Write-Stage '[lint] pre-commit configuration'
     $preCommit = Resolve-PinnedTool 'pre-commit' '4.6.2'

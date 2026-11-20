@@ -1,0 +1,51 @@
+% TC-0002 test-case definition (WSP test-case template).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+
+% Compile from the repository root so this path resolves to the pinned WSP
+% submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0002}
+\def\TCTitle{UpDown model}
+\def\TCPurpose{%
+  Verify the model of the UpDown: the defaults, the steps of the arrows with Increment, the stops at Min and Max, Wrap, the position that the window reports, and the rules for Min, Max and Value.}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{REQ-0001}
+\def\TCDesignRef{Not applicable.}
+\def\TCFeatureRef{\texttt{include/wfc/mscomctl2/updown.hpp}; \texttt{tests/updown\_test.cpp}.}
+\def\TCTestTechnique{%
+  Boundary value analysis at Min, Max and Value; state transition checks of the arrow clicks.}
+
+\def\TCPreconditions{%
+  The library is configured and built with \texttt{cmake -S . -B out/build} and \texttt{cmake --build out/build}.}
+\def\TCEnvironment{%
+  Windows (CI: x86, x64 and ARM64, static and shared build; Linux Winelib and WebAssembly are experimental). CMake 3.28 or later, CTest, a C++20 compiler; Debug configuration locally (x64).}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  A default model (0 to 10, Value 0, Increment 1, no Wrap), models at Min and at Max, Increment 0, 1 and 4, positions 2, 7 and 99, and Value -1, 5 and 11.}
+\def\TCInitialState{%
+  No output of an earlier run is used. CTest test name: \texttt{TC-0002-updown-model}.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item Run \texttt{mscomctl2\_updown\_test} through CTest.
+    \item Check the defaults, then an up click (Value 1), Increment 4 (Value 5) and Increment 0 (acts as 1).
+    \item At Max the up arrow keeps Value; with Wrap it goes to Min and the down arrow goes back to Max; at Min the down arrow keeps Value.
+    \item A position above Value is the up arrow, one below it the down arrow, and 99 is kept inside the range.
+    \item Value 11 and -1 are invalid, Value 5 changes, the same Value is no change; Max below Min is accepted; narrowing the range brings Value inside; Min above Max is accepted.
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  Exit status 0 and the line \texttt{updown: the model behaves}; every check that fails prints \texttt{FAIL:} and the exit status is 1.}
+\def\TCPostConditions{%
+  No files are written.}
+
+\TCTemplate
+
+\end{document}

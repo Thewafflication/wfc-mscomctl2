@@ -1,0 +1,49 @@
+% TC-0007 test-case definition (WSP test-case template).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+
+% Compile from the repository root so this path resolves to the pinned WSP
+% submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0007}
+\def\TCTitle{Corpus 211: UpDown properties, range errors, clicks and event order}
+\def\TCPurpose{%
+  Verify, through a form with two UpDown controls, the values of the form file, the range rules and error 380, the events Change, UpClick and DownClick and their order, and the scripted clicks on the arrows.}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{REQ-0001}
+\def\TCDesignRef{Not applicable.}
+\def\TCFeatureRef{\texttt{tests/corpus/211-mscomctl2-updown.vbp}, \texttt{.frm}, \texttt{.ui}, \texttt{.debug} and \texttt{.expected}.}
+\def\TCTestTechnique{%
+  Scenario test: a program that prints what it observes, compared with a stored transcript.}
+
+\def\TCPreconditions{%
+  A \texttt{wfc} executable that includes this library (WFC version 0.8.28 or later) and the files of the case in \texttt{tests/corpus}.}
+\def\TCEnvironment{%
+  Windows x64. The \texttt{wfc} executable of WFC, given to CMake as \texttt{WFC\_EXE}; the program is run by the interpreter (\texttt{--interpret}) with the system common controls. The case is registered only when \texttt{WFC\_EXE} is set; without it CTest reports the case as skipped.}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  Min, Max, Value and Increment of both controls; Value 3, 9; Max 3 and 5; Min 2, 1 and 7; the script lines \texttt{ui Form1.UpDown1 up} (three times), \texttt{down} and the same for UpDown2.}
+\def\TCInitialState{%
+  No output of an earlier run is used. CTest test name: \texttt{TC-0007-corpus-updown}.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item Run \texttt{wfc --interpret tests/corpus/211-mscomctl2-updown.vbp}. Form\_Load prints the defaults (Min, Max, Value, Increment, Wrap, the type name), sets Value 3, narrows Max to 3 and Min to 2, then Max 5 and Min 1, and tries Value 9 and Min 7.
+    \item The script \texttt{211-mscomctl2-updown.ui} clicks the up arrow of UpDown1 three times and the down arrow once, clicks the up and down arrows of UpDown2, and closes the form.
+    \item Compare the output of the Immediate window (Debug.Print) with \texttt{211-mscomctl2-updown.debug} and standard output with \texttt{211-mscomctl2-updown.expected} (empty).
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  The first line shows the values of the form file (\texttt{1 5 2 1 False UpDown}, with the spacing of Debug.Print); setting Value 9 reports error 380 and leaves Value at 3 (\texttt{high 380 3}); Min 7 is accepted above Max (\texttt{min 0 7}); each click prints \texttt{up1} or \texttt{down1} and, when Value changed, \texttt{change1} (likewise \texttt{up2}, \texttt{down2} and \texttt{change2}), in the order of the script. Both outputs equal the stored files exactly.}
+\def\TCPostConditions{%
+  No files are written; the interpreter's windows are closed by the script.}
+
+\TCTemplate
+
+\end{document}

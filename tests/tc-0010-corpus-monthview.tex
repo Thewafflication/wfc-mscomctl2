@@ -1,0 +1,49 @@
+% TC-0010 test-case definition (WSP test-case template).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+
+% Compile from the repository root so this path resolves to the pinned WSP
+% submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0010}
+\def\TCTitle{Corpus 214: MonthView value, range, selection, visible days and events}
+\def\TCPurpose{%
+  Verify the MonthView through a form: the default Value and its parts, setting Month and Day, error 380 for a bad day, range and MinDate and MaxDate, StartOfWeek and VisibleDays, DayBold, MultiSelect with MaxSelCount, and the events SelChange (with Cancel), DateClick and DateDblClick.}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{REQ-0003}
+\def\TCDesignRef{Not applicable.}
+\def\TCFeatureRef{\texttt{tests/corpus/214-mscomctl2-monthview.vbp}, \texttt{.frm}, \texttt{.ui}, \texttt{.debug} and \texttt{.expected}.}
+\def\TCTestTechnique{%
+  Scenario test: a program that prints what it observes, compared with a stored transcript.}
+
+\def\TCPreconditions{%
+  A \texttt{wfc} executable that includes this library (WFC version 0.8.28 or later) and the files of the case in \texttt{tests/corpus}.}
+\def\TCEnvironment{%
+  Windows x64. The \texttt{wfc} executable of WFC, given to CMake as \texttt{WFC\_EXE}; the program is run by the interpreter (\texttt{--interpret}) with the system common controls. The case is registered only when \texttt{WFC\_EXE} is set; without it CTest reports the case as skipped.}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  Dates in 2026 and 2027; the script lines \texttt{click 2027-06-20} (twice), \texttt{click 2027-07-04}, \texttt{dblclick 2027-07-05}, \texttt{select 2026-10-14 2026-10-16} and \texttt{select 2026-10-14 2026-10-20}.}
+\def\TCInitialState{%
+  No output of an earlier run is used. CTest test name: \texttt{TC-0010-corpus-monthview}.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item Run \texttt{wfc --interpret tests/corpus/214-mscomctl2-monthview.vbp}. Form\_Load prints the default Value and its parts, sets Month, Day, MinDate and MaxDate, reads VisibleDays and DayBold, and sets MultiSelect.
+    \item The script clicks 2027-06-20 twice, 2027-07-04, double-clicks 2027-07-05, and selects two ranges on the multi-select control.
+    \item Compare the Immediate-window output with \texttt{214-mscomctl2-monthview.debug} and standard output with the empty \texttt{214-mscomctl2-monthview.expected}.
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  Errors 380 for the day 30 of February, the range, the index of VisibleDays and a selection longer than MaxSelCount; the events arrive in the order SelChange, DateClick, and for a double click also DateDblClick; the click on 2027-07-04 is cancelled in SelChange, so Value stays 2027-06-20 when DateClick runs. Both outputs equal the stored files.}
+\def\TCPostConditions{%
+  No files are written; the interpreter's windows are closed by the script.}
+
+\TCTemplate
+
+\end{document}

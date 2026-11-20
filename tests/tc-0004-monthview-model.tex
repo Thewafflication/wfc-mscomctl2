@@ -1,0 +1,53 @@
+% TC-0004 test-case definition (WSP test-case template).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+
+% Compile from the repository root so this path resolves to the pinned WSP
+% submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0004}
+\def\TCTitle{MonthView model and calendar arithmetic}
+\def\TCPurpose{%
+  Verify the calendar arithmetic (date serials, weekdays, leap years, week numbers as VB6 numbers them) and the model of the MonthView: the visible days, the parts of Value, the range, the selection with and without MultiSelect, the selection the user makes, and the bold days.}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{REQ-0003}
+\def\TCDesignRef{Not applicable.}
+\def\TCFeatureRef{\texttt{include/wfc/mscomctl2/monthview.hpp}; \texttt{include/wfc/mscomctl2/calendar.hpp}; \texttt{tests/monthview\_test.cpp}.}
+\def\TCTestTechnique{%
+  Boundary value analysis at month ends, the leap day, the range limits and MaxSelCount; equivalence partitioning of the selection kinds.}
+
+\def\TCPreconditions{%
+  The library is configured and built with \texttt{cmake -S . -B out/build} and \texttt{cmake --build out/build}.}
+\def\TCEnvironment{%
+  Windows (CI: x86, x64 and ARM64, static and shared build; Linux Winelib and WebAssembly are experimental). CMake 3.28 or later, CTest, a C++20 compiler; Debug configuration locally (x64).}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  The dates 1899-12-30 (serial 0), 2000-01-01 (36526, a Saturday), 2024-02-29, 2026-11-07 and 2024-05-15; first days of the week 1, 2, 9 and 0x10002; MaxSelCount 3.}
+\def\TCInitialState{%
+  No output of an earlier run is used. CTest test name: \texttt{TC-0004-monthview-model}.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item Run \texttt{mscomctl2\_monthview\_test} through CTest.
+    \item Check the serials and weekdays, the leap years 1900 and 2000, and the week numbers 52, 1, 1 and 44.
+    \item Check VisibleDays 1 and 42 from Sunday and from Monday, and that 0 and 43 are refused; flag bits above the first day are dropped and a bad first day is Sunday.
+    \item Check Day 31, Month 2 (the day returns to 29), Day 30 in February, Month 13 and Year 1600.
+    \item Check MinDate and MaxDate moving Value and refusing dates outside the range.
+    \item Check the selection: SelEnd without MultiSelect, a selection of three days, four days refused, a new SelStart, an end before the start, and the user's selection (one date, the same date, a backwards range, more than MaxSelCount, a date outside the range, apply).
+    \item Check that a bold day can be set and made plain.
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  Exit status 0 and the line \texttt{monthview: the model behaves}; a failed check prints \texttt{FAIL:} and the exit status is 1.}
+\def\TCPostConditions{%
+  No files are written.}
+
+\TCTemplate
+
+\end{document}

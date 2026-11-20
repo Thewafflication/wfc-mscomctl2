@@ -1,4 +1,4 @@
-# REQ-0311 — DTPicker control (`MSComCtl2.DTPicker`)
+# REQ-0004 — DTPicker control (`MSComCtl2.DTPicker`)
 
 **Content type:** Project requirement
 
@@ -64,5 +64,23 @@ system control paints them is not verified).
 
 ## Verification
 
-Corpus `215-mscomctl2-dtpicker` (parts of the value, ranges, Null and the
-check box, `Change`, `DropDown`, `CloseUp`); the example `examples/dtpicker`.
+Method: automated test, and demonstration through the example.
+
+- [TC-0005](../tests/tc-0005-dtpicker-model.tex): the model of the
+  DTPicker (value and range, Null with `CheckBox`, parts of the value, the
+  text of the test scripts).
+- [TC-0011](../tests/tc-0011-corpus-dtpicker.tex): corpus
+  `215-mscomctl2-dtpicker` (parts of the value, ranges, Null and the check
+  box, `Change`, `DropDown`, `CloseUp`).
+- [TC-0014](../tests/tc-0014-corpus-dtpicker-callback.tex): corpus
+  `219-mscomctl2-dtpicker-callback` (callback fields).
+- [TC-0016](../tests/tc-0016-corpus-calendar-colors.tex): corpus
+  `221-mscomctl2-calendar-colors` (the calendar colours).
+- [TC-0006](../tests/tc-0006-dll.tex): a DTPicker made through COM in the
+  shared build.
+- Demonstration: `examples/dtpicker`.
+
+## Relationships
+
+Related: REQ-0003 (MonthView), REQ-0006 (the member table), REQ-0007 (the
+shared library).

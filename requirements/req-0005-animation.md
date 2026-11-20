@@ -1,4 +1,4 @@
-# REQ-0312 — Animation control (`MSComCtl2.Animation`)
+# REQ-0005 — Animation control (`MSComCtl2.Animation`)
 
 **Content type:** Project requirement
 
@@ -32,5 +32,13 @@ only, as in VB6; other compressions load and do not draw.
 
 ## Verification
 
-Corpus `217-mscomctl2-animation` (defaults, `Open` errors, `Play`/`Stop`/`Close`,
-`AutoPlay`, `Click`, `DblClick`); the example `examples/animation`.
+Method: automated test, and demonstration through the example.
+
+- [TC-0012](../tests/tc-0012-corpus-animation.tex): corpus
+  `217-mscomctl2-animation` (defaults, `Open` errors, `Play`/`Stop`/`Close`,
+  `AutoPlay`, `Click`, `DblClick`).
+- Demonstration: `examples/animation`.
+
+## Relationships
+
+Related: REQ-0006 (the member table), REQ-0007 (the shared library).

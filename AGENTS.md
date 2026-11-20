@@ -31,8 +31,12 @@ libraries. It follows WSP (the `wsp/` submodule); the adoption status is in
 
 ## Process
 
-- Requirements are `requirements/req-NNNN-*.md`; tests are the CTest cases
-  and corpus programs they name. Keep identifiers stable and update the
-  requirement when behavior changes.
+- Requirements are `requirements/req-NNNN-<title>.md` (`REQ-NNNN`); test
+  cases are `TC-NNNN`: the specification `tests/tc-NNNN-<title>.tex`, the
+  runner `tests/run-tc-NNNN.ps1` and the CTest name `TC-NNNN-<short-name>`.
+  Numbers run from 0001 in this repository's own namespace and are never
+  reused or renumbered; `docs/id-map.md` maps the old WFC identifiers.
+  `wsp/tools/Test-Traceability.ps1` checks the links (run by the lint stage).
+  Update the requirement when behavior changes.
 - The version is in `VERSION` (`0.<target major>.<target minor>`); see
   `ROADMAP.md`.

@@ -1,4 +1,4 @@
-# REQ-0310 — MonthView control (`MSComCtl2.MonthView`)
+# REQ-0003 — MonthView control (`MSComCtl2.MonthView`)
 
 **Content type:** Project requirement
 
@@ -60,6 +60,26 @@ calendar is not reported.
 
 ## Verification
 
-Corpus `214-mscomctl2-monthview` (parts of the date, ranges, selection, visible
-days, bold days, `SelChange` with `Cancel`, `DateClick`, `DateDblClick`); the
-example `examples/monthview`.
+Method: automated test, and demonstration through the example.
+
+- [TC-0004](../tests/tc-0004-monthview-model.tex): the model of the
+  MonthView (calendar arithmetic, parts of `Value`, range, selection, visible
+  days).
+- [TC-0010](../tests/tc-0010-corpus-monthview.tex): corpus
+  `214-mscomctl2-monthview` (parts of the date, ranges, selection, visible
+  days, bold days, `SelChange` with `Cancel`, `DateClick`, `DateDblClick`).
+- [TC-0013](../tests/tc-0013-corpus-getdaybold.tex): corpus
+  `218-mscomctl2-getdaybold` (`GetDayBold`).
+- [TC-0015](../tests/tc-0015-corpus-monthview-hittest.tex): corpus
+  `220-mscomctl2-monthview-hittest` (`HitTest`, `ComputeControlSize`).
+- [TC-0016](../tests/tc-0016-corpus-calendar-colors.tex): corpus
+  `221-mscomctl2-calendar-colors` (the calendar colours).
+- [TC-0006](../tests/tc-0006-dll.tex): a MonthView made through COM in the
+  shared build.
+- Demonstration: `examples/monthview`.
+
+## Relationships
+
+Related: REQ-0004 (DTPicker, which shares the calendar helpers and the
+calendar colours), REQ-0006 (the member table), REQ-0007 (the shared
+library).

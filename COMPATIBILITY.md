@@ -23,11 +23,11 @@ dispatch id.
 
 | Control | Status |
 | --- | --- |
-| UpDown | Implemented ([REQ-0308](requirements/req-0308-updown.md)): defaults, range and `Change`, `UpClick`/`DownClick`, `Increment`, `Wrap`, both orientations, the Win32 up-down control. The buddy (`BuddyControl`, `BuddyProperty`, `SyncBuddy`, `AutoBuddy`) follows `Value`. |
-| FlatScrollBar | Implemented ([REQ-0309](requirements/req-0309-flatscrollbar.md)): behaves as the intrinsic scroll bars (range, `Change`, `Scroll`, both orientations) on a system scroll bar; `Appearance` and `Arrows` are stored, the flat style is not drawn yet. |
-| MonthView | Implemented ([REQ-0310](requirements/req-0310-monthview.md)): `Value` and its parts, `MinDate`/`MaxDate`, `MultiSelect` with `MaxSelCount`, `VisibleDays`, `DayBold`, `GetDayBold`, `HitTest`, `ComputeControlSize`, the calendar colours, `SelChange` (with `Cancel`), `DateClick`, `DateDblClick`, the system month calendar. `HitTest` and `ComputeControlSize` ask the system calendar (corpus 220). |
-| DTPicker | Implemented ([REQ-0311](requirements/req-0311-dtpicker.md)): `Value` (a Date or Null) and its parts, `MinDate`/`MaxDate`, `Format`, `CustomFormat`, `CheckBox`, `UpDown`, `Change`, `DropDown`, `CloseUp`, the system date-time picker. The callback events (`Format`, `FormatSize`, `CallbackKeyDown`) are raised; the calendar colours apply to the drop-down calendar. |
-| Animation | Implemented ([REQ-0312](requirements/req-0312-animation.md)): `Open` (53 and 5 errors), `Play`, `Stop`, `Close`, `AutoPlay`, `Center`, `BackStyle`, `Click`, `DblClick`, the system animation control. |
+| UpDown | Implemented ([REQ-0001](requirements/req-0001-updown.md)): defaults, range and `Change`, `UpClick`/`DownClick`, `Increment`, `Wrap`, both orientations, the Win32 up-down control. The buddy (`BuddyControl`, `BuddyProperty`, `SyncBuddy`, `AutoBuddy`) follows `Value`. |
+| FlatScrollBar | Implemented ([REQ-0002](requirements/req-0002-flatscrollbar.md)): behaves as the intrinsic scroll bars (range, `Change`, `Scroll`, both orientations) on a system scroll bar; `Appearance` and `Arrows` are stored, the flat style is not drawn yet. |
+| MonthView | Implemented ([REQ-0003](requirements/req-0003-monthview.md)): `Value` and its parts, `MinDate`/`MaxDate`, `MultiSelect` with `MaxSelCount`, `VisibleDays`, `DayBold`, `GetDayBold`, `HitTest`, `ComputeControlSize`, the calendar colours, `SelChange` (with `Cancel`), `DateClick`, `DateDblClick`, the system month calendar. `HitTest` and `ComputeControlSize` ask the system calendar (corpus 220). |
+| DTPicker | Implemented ([REQ-0004](requirements/req-0004-dtpicker.md)): `Value` (a Date or Null) and its parts, `MinDate`/`MaxDate`, `Format`, `CustomFormat`, `CheckBox`, `UpDown`, `Change`, `DropDown`, `CloseUp`, the system date-time picker. The callback events (`Format`, `FormatSize`, `CallbackKeyDown`) are raised; the calendar colours apply to the drop-down calendar. |
+| Animation | Implemented ([REQ-0005](requirements/req-0005-animation.md)): `Open` (53 and 5 errors), `Play`, `Stop`, `Close`, `AutoPlay`, `Center`, `BackStyle`, `Click`, `DblClick`, the system animation control. |
 
 The behaviour follows the documented controls; there is no reference probe of
 the Microsoft ones yet. The order is in [ROADMAP.md](ROADMAP.md).
@@ -42,10 +42,22 @@ the Microsoft ones yet. The order is in [ROADMAP.md](ROADMAP.md).
 
 ## How it is checked
 
-- A C program (`tests/mscomctl2_dll_test.c`) loads the DLL, checks its COM entry
-  points and version resource, and registers and unregisters it.
-- A table test (`tests/mscomctl2_tables_test.cpp`) checks the five classes and
-  their member kinds.
-- The corpus programs `211-mscomctl2-updown`, `212-mscomctl2-flatscrollbar`, `213-mscomctl2-updown-buddy`, `214-mscomctl2-monthview` and `215-mscomctl2-dtpicker` (run by WFC) test the UpDown and the FlatScrollBar.
+Every test case is `TC-NNNN` with a specification in `tests/tc-NNNN-*.tex`,
+and each requirement in `requirements/` lists its cases; the check is
+`wsp/tools/Test-Traceability.ps1` (run by `scripts/Invoke-Lint.ps1`).
+
+- TC-0001: the member table (`tests/mscomctl2_tables_test.cpp`) checks the five
+  classes and their member kinds.
+- TC-0002 to TC-0005: the models of UpDown, the scroll bar, MonthView and
+  DTPicker (`tests/updown_test.cpp`, `scrollbar_test.cpp`, `monthview_test.cpp`,
+  `dtpicker_test.cpp`).
+- TC-0006: a C program (`tests/mscomctl2_dll_test.c`, shared build) loads the
+  DLL, checks its COM entry points and version resource, registers and
+  unregisters it, and makes the controls through COM.
+- TC-0007 to TC-0016: the corpus programs `211` to `221` in `tests/corpus`,
+  run by the `wfc` executable (`-DWFC_EXE=<path to wfc>`; WFC itself runs them
+  when it mounts the library).
 - WFC compares the table with the evidence
-  (`TC-MP0010-mscomctl2-tables-current`).
+  (`TC-MP0010-mscomctl2-tables-current`, a test of the WFC repository).
+
+The identifiers the controls had in WFC are in [docs/id-map.md](docs/id-map.md).

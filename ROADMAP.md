@@ -26,22 +26,22 @@ One control at a time, each with a corpus program, a GUI example and a
 requirement:
 
 - [x] UpDown (Value, Min, Max, Increment, Wrap, Orientation, `Change`,
-      `UpClick`, `DownClick`; REQ-0308, corpus 211, `examples/updown`).
+      `UpClick`, `DownClick`; REQ-0001, corpus 211, `examples/updown`).
 - [x] UpDown buddy: `BuddyControl`, `BuddyProperty`, `SyncBuddy`, `AutoBuddy` (corpus 213).
 - [x] FlatScrollBar (Min, Max, Value, LargeChange, SmallChange, Orientation,
-      `Change`, `Scroll`; REQ-0309, corpus 212, `examples/flatscrollbar`).
+      `Change`, `Scroll`; REQ-0002, corpus 212, `examples/flatscrollbar`).
 - [ ] FlatScrollBar drawn in the flat style (`Appearance`, `Arrows`).
 - [x] MonthView (Value, the date range, selections, `DateClick`, `DateDblClick`,
-      `SelChange`; REQ-0310, corpus 214, `examples/monthview`).
+      `SelChange`; REQ-0003, corpus 214, `examples/monthview`).
 - [x] MonthView `GetDayBold` (corpus 218).
 - [x] MonthView `HitTest`, `ComputeControlSize` (corpus 220).
 - [ ] MonthView several months (`MonthRows`, `MonthColumns`).
 - [x] DTPicker (Value, Format, CustomFormat, CheckBox, UpDown, `Change`,
-      `CloseUp`, `DropDown`; REQ-0311, corpus 215, `examples/dtpicker`).
+      `CloseUp`, `DropDown`; REQ-0004, corpus 215, `examples/dtpicker`).
 - [x] DTPicker callback fields (`Format`, `FormatSize`, `CallbackKeyDown`; corpus
       219; the host's drawing of the text is not verified).
 - [x] Calendar colours of MonthView and DTPicker (corpus 221).
-- [x] Animation (Open, Play, Stop, Close, AutoPlay, Center; AVI files; REQ-0312,
+- [x] Animation (Open, Play, Stop, Close, AutoPlay, Center; AVI files; REQ-0005,
       corpus 217, `examples/animation`).
 - [x] `DllGetClassObject` returns a class factory; its objects are late-bound
       (IDispatch) controls built from the member table, without the WFC
@@ -113,4 +113,5 @@ requirement:
 - [x] The `wsp` submodule (pinned like the other libraries).
 - [x] 80-column source style, clang-format and gersemi, checked by
       `scripts/Invoke-Lint.ps1` and a blocking CI job.
-- [ ] Requirements and traceability (`requirements/`).
+- [x] Requirements `REQ-NNNN`, test cases `TC-NNNN` and the traceability check
+      (`requirements/`, `tests/`, `docs/id-map.md`).

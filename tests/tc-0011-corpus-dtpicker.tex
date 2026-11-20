@@ -1,0 +1,49 @@
+% TC-0011 test-case definition (WSP test-case template).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+
+% Compile from the repository root so this path resolves to the pinned WSP
+% submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0011}
+\def\TCTitle{Corpus 215: DTPicker value, range, Null, check box and events}
+\def\TCPurpose{%
+  Verify the DTPicker through a form: the default Value and its parts, the parts that change the others, error 380 for a part or a date out of range, Null and the check box, and the events Change, DropDown and CloseUp.}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{REQ-0004}
+\def\TCDesignRef{Not applicable.}
+\def\TCFeatureRef{\texttt{tests/corpus/215-mscomctl2-dtpicker.vbp}, \texttt{.frm}, \texttt{.ui}, \texttt{.debug} and \texttt{.expected}.}
+\def\TCTestTechnique{%
+  Scenario test: a program that prints what it observes, compared with a stored transcript.}
+
+\def\TCPreconditions{%
+  A \texttt{wfc} executable that includes this library (WFC version 0.8.28 or later) and the files of the case in \texttt{tests/corpus}.}
+\def\TCEnvironment{%
+  Windows x64. The \texttt{wfc} executable of WFC, given to CMake as \texttt{WFC\_EXE}; the program is run by the interpreter (\texttt{--interpret}) with the system common controls. The case is registered only when \texttt{WFC\_EXE} is set; without it CTest reports the case as skipped.}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  Dates in 2025 to 2030; the script lines \texttt{dropdown}, \texttt{value 2027-05-06 07:08:09}, \texttt{closeup}, \texttt{value 2030-01-01}, \texttt{check on} and \texttt{check off} (twice).}
+\def\TCInitialState{%
+  No output of an earlier run is used. CTest test name: \texttt{TC-0011-corpus-dtpicker}.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item Run \texttt{wfc --interpret tests/corpus/215-mscomctl2-dtpicker.vbp}. Form\_Load prints the default Value and its parts, changes Hour, Day and Month, tries a day and a date out of range, and sets Null with and without CheckBox.
+    \item The script drops the calendar down, sets a value, closes the calendar up, sets values (the second beyond MaxDate), ticks and clears the box of the second control, then closes the form.
+    \item Compare the Immediate-window output with \texttt{215-mscomctl2-dtpicker.debug} and standard output with the empty \texttt{215-mscomctl2-dtpicker.expected}.
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  Error 380 for Hour 24, a day beyond the month, a date outside the range, Null without CheckBox and a part of Null; Change is printed once for each change of Value (and for clearing the box); DropDown and CloseUp bracket the calendar. Both outputs equal the stored files.}
+\def\TCPostConditions{%
+  No files are written; the interpreter's windows are closed by the script.}
+
+\TCTemplate
+
+\end{document}

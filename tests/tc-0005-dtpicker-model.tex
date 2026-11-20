@@ -1,0 +1,52 @@
+% TC-0005 test-case definition (WSP test-case template).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+
+% Compile from the repository root so this path resolves to the pinned WSP
+% submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0005}
+\def\TCTitle{DTPicker model and calendar helpers}
+\def\TCPurpose{%
+  Verify the parts of a date and time, the text of the test scripts, and the model of the DTPicker: Value and its range, Null with CheckBox, the parts of Value, and the check box.}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{REQ-0004}
+\def\TCDesignRef{Not applicable.}
+\def\TCFeatureRef{\texttt{include/wfc/mscomctl2/dtpicker.hpp}; \texttt{include/wfc/mscomctl2/calendar.hpp}; \texttt{tests/dtpicker\_test.cpp}.}
+\def\TCTestTechnique{%
+  Boundary value analysis at the range limits, midnight rounding and month ends; state transition checks of the check box.}
+
+\def\TCPreconditions{%
+  The library is configured and built with \texttt{cmake -S . -B out/build} and \texttt{cmake --build out/build}.}
+\def\TCEnvironment{%
+  Windows (CI: x86, x64 and ARM64, static and shared build; Linux Winelib and WebAssembly are experimental). CMake 3.28 or later, CTest, a C++20 compiler; Debug configuration locally (x64).}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  The serial 45000.5 (2023-03-15 12:00), 45000.9999999, the script texts 2023-03-15, 13:45:10, 2023-02-30 and 24:00:00, and ranges around 44999 to 45000.}
+\def\TCInitialState{%
+  No output of an earlier run is used. CTest test name: \texttt{TC-0005-dtpicker-model}.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item Run \texttt{mscomctl2\_dtpicker\_test} through CTest.
+    \item Check the parts of 45000.5 and that a time that rounds up to midnight is the next day; parse a date and time, a date, and refuse a date and an hour that do not exist.
+    \item Check a new value, the same value (no change), the parts Hour, Day 31, Month 2 (the day returns to 28), Second, and the invalid Hour 24, Minute 60, Day 30 in February and Year 10000.
+    \item Check Max below Value (Value comes down, keeping its time), Min, Min above Max, and Value outside the range.
+    \item Check Null with and without CheckBox, Null again (no change), a part of Null (invalid) and a value after Null.
+    \item Check clearing and ticking the box, with the kept value and with the first value when nothing was kept.
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  Exit status 0 and the line \texttt{dtpicker: the model behaves}; a failed check prints \texttt{FAIL:} and the exit status is 1.}
+\def\TCPostConditions{%
+  No files are written.}
+
+\TCTemplate
+
+\end{document}

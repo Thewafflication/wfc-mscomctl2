@@ -1,0 +1,52 @@
+% TC-0006 test-case definition (WSP test-case template).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+
+% Compile from the repository root so this path resolves to the pinned WSP
+% submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0006}
+\def\TCTitle{Shared library: entry points, version, registration, objects}
+\def\TCPurpose{%
+  Verify, from a C program that uses the DLL as any other program does, the COM entry points, the version resource, the registration round trip under the WFC ProgIDs and under the Microsoft ones, a control made through the class factory, and the defaults, ranges and events of an UpDown, FlatScrollBar, MonthView and DTPicker made through COM.}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{REQ-0007, REQ-0001, REQ-0002, REQ-0003, REQ-0004}
+\def\TCDesignRef{Not applicable.}
+\def\TCFeatureRef{\texttt{tests/mscomctl2\_dll\_test.c}; \texttt{tests/dll\_check.h}; \texttt{src/registration.cpp}; \texttt{src/wfcmscomctl2.def}.}
+\def\TCTestTechnique{%
+  Black-box testing of the COM interfaces; round-trip check of the registration; boundary value analysis of the ranges.}
+
+\def\TCPreconditions{%
+  The shared build: \texttt{cmake -S . -B out/build-shared -DWFC\_MSCOMCTL2\_SHARED=ON} and a build of it. The registry of the current user holds neither the library nor the Microsoft class ids of the controls.}
+\def\TCEnvironment{%
+  Windows with the registry of the current user (the test sets \texttt{WFC\_REGISTER\_SCOPE=user}); the shared build only. The test holds the CTest resource lock \texttt{registry}.}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  The DLL, \texttt{VERSION} and \texttt{TARGET} as arguments; the five WFC and Microsoft ProgIDs and class ids; the properties and methods named in the program.}
+\def\TCInitialState{%
+  No output of an earlier run is used. CTest test name: \texttt{TC-0006-dll}.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item Run \texttt{mscomctl2\_dll\_test} through CTest with the path of \texttt{wfcmscomctl2.dll}, the version and the target.
+    \item Load the DLL; check the four COM entry points, that \texttt{DllCanUnloadNow} is \texttt{S\_OK}, and that \texttt{DllGetClassObject} refuses an unknown class.
+    \item Compare the file version with \texttt{VERSION} and the \texttt{Comments} string with \texttt{Targets } and the target.
+    \item Register with \texttt{WFC\_REGISTER\_MICROSOFT\_IDS=0}: check the library key (version, target, server) and for every class the ProgID, class id and \texttt{InprocServer32}; unregister and check that nothing is left. Repeat with \texttt{WFC\_REGISTER\_MICROSOFT\_IDS=1} and the Microsoft ids.
+    \item Make an UpDown through the class factory: keep a property, accept a method, refuse an unknown name and aggregation, and unload after the release.
+    \item Check through COM: the UpDown defaults, error 380 for Value above Max, Value following a narrower range, Min above Max, and Change through a connection point (and none after Unadvise); the FlatScrollBar defaults, Max and error 380; the MonthView parts of Value, Month 2 and 13, MinDate, DayBold, VisibleDays (1 and 43) and a selection of three and four days; the DTPicker Change, the parts, Hour 25, Null with and without CheckBox and Value above MaxDate.
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  Exit status 0, with a line for each stage. Exit status 77 (skipped, not a failure) when the registry already holds the library; the Microsoft part prints that it is skipped when a Microsoft class id is already in HKCU. Any failed check prints \texttt{FAIL:}, unregisters the library and exits with status 1.}
+\def\TCPostConditions{%
+  The registry of the current user is as before the run.}
+
+\TCTemplate
+
+\end{document}

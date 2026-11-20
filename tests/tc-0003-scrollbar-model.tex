@@ -1,0 +1,50 @@
+% TC-0003 test-case definition (WSP test-case template).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+
+% Compile from the repository root so this path resolves to the pinned WSP
+% submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0003}
+\def\TCTitle{Scroll bar model of the FlatScrollBar}
+\def\TCPurpose{%
+  Verify the model that the FlatScrollBar shares with the intrinsic scroll bars: the defaults, the range, the steps of the arrows and the track, the position the user moves to, and a reversed range (Min above Max).}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{REQ-0002}
+\def\TCDesignRef{Not applicable.}
+\def\TCFeatureRef{\texttt{include/wfc/mscomctl2/scrollbar.hpp}; \texttt{tests/scrollbar\_test.cpp}.}
+\def\TCTestTechnique{%
+  Boundary value analysis at Min and Max; equivalence partitioning of forward and reversed ranges.}
+
+\def\TCPreconditions{%
+  The library is configured and built with \texttt{cmake -S . -B out/build} and \texttt{cmake --build out/build}.}
+\def\TCEnvironment{%
+  Windows (CI: x86, x64 and ARM64, static and shared build; Linux Winelib and WebAssembly are experimental). CMake 3.28 or later, CTest, a C++20 compiler; Debug configuration locally (x64).}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  The default model (0 to 32767), a model 0 to 100 at 50 with SmallChange 2 and LargeChange 10, and a reversed model 100 to 0 at 100 with SmallChange 5 and LargeChange 20.}
+\def\TCInitialState{%
+  No output of an earlier run is used. CTest test name: \texttt{TC-0003-scrollbar-model}.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item Run \texttt{mscomctl2\_scrollbar\_test} through CTest.
+    \item Check the defaults, Value 40 (a change, then no change), and Value -1 and 32768 (invalid).
+    \item An arrow steps SmallChange and the track steps LargeChange; a move to 500 stops at Max, a move to -9 at Min, and no step goes beyond Max.
+    \item In the reversed model check low 0 and high 100, Value 30, and that forward is towards Max (25) and back towards Min (45).
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  Exit status 0 and the line \texttt{scrollbar model: ok}; a failed check prints \texttt{FAIL:} and the exit status is 1.}
+\def\TCPostConditions{%
+  No files are written.}
+
+\TCTemplate
+
+\end{document}
