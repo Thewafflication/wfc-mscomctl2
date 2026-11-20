@@ -141,5 +141,39 @@ function Write-Stage {
     Write-Output $Text
 }
 
+<#
+.SYNOPSIS
+Finds the wfc executable that runs the corpus programs.
+.DESCRIPTION
+The corpus cases (TC-0007 to TC-0016) run through wfc. Looks at the
+WFC_EXE environment variable, then wfc on PATH, then C:\wfc\wfc.exe, then
+the Debug build of a WFC checkout next to this repository. Returns $null when
+none exists.
+.OUTPUTS
+System.String. The full path, or $null.
+#>
+function Resolve-WfcExecutable {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param()
+
+    $root = Split-Path -Parent $PSScriptRoot
+    $candidates = [Collections.Generic.List[string]]::new()
+    if ($env:WFC_EXE) { $candidates.Add($env:WFC_EXE) }
+    $onPath = Get-Command wfc -CommandType Application `
+        -ErrorAction SilentlyContinue
+    foreach ($command in @($onPath)) { $candidates.Add($command.Source) }
+    $candidates.Add('C:\wfc\wfc.exe')
+    $sibling = Join-Path (Split-Path -Parent $root) 'wfc'
+    $candidates.Add((Join-Path $sibling `
+            'out\build\windows-x64-debug\Debug\wfc.exe'))
+    foreach ($path in $candidates) {
+        if (Test-Path -LiteralPath $path -PathType Leaf) {
+            return (Resolve-Path -LiteralPath $path).Path
+        }
+    }
+    return $null
+}
+
 Export-ModuleMember -Function Invoke-CheckedCommand, Write-Stage,
-    Resolve-PinnedTool, Get-OwnedFile
+    Resolve-PinnedTool, Get-OwnedFile, Resolve-WfcExecutable

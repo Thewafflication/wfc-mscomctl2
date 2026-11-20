@@ -22,10 +22,23 @@ libraries. It follows WSP (the `wsp/` submodule); the adoption status is in
   ARM64, Winelib and WebAssembly.
 - Install the pinned tools with
   `python -m pip install --user --requirement requirements-dev.txt`.
-- The lint stage is `pwsh -NoProfile -File scripts/Invoke-Lint.ps1`: WSP
-  physical style (80 columns), clang-format and gersemi in check mode. It
-  changes no files. `pre-commit install` runs it as the commit gate; never
-  skip it with `--no-verify`.
+- The commit gate (`pre-commit install`, then plain `git commit`) runs four
+  hooks in order: `scripts/Start-CommitGate.ps1`, `scripts/Invoke-Lint.ps1`
+  (WSP physical style at 80 columns, clang-format, gersemi, traceability,
+  all in check mode), `scripts/Invoke-Build.ps1` (x64 Debug, static and
+  shared) and `scripts/Invoke-Tests.ps1` (all 16 cases). Never skip it with
+  `--no-verify`; do not run its stages by hand in place of it.
+- Only one gate runs at a time on the machine: the first hook takes
+  `wfc-commit-gate.lock` in the temp folder, the same lock as the WFC gate
+  (a library gate and a WFC gate never overlap), and opens the always-on-top
+  test progress window (`scripts/Show-TestProgress.ps1`, which follows
+  `out/test-progress.log`). Do not suppress or replace the window. A commit
+  refused because a gate is running waits for it; do not start a second
+  commit, build or `ctest` in the same checkout meanwhile.
+- The corpus cases (TC-0007 to TC-0016) run through the `wfc` executable:
+  `Invoke-Build.ps1` finds it through `WFC_EXE`, `wfc` on PATH,
+  `C:\wfc\wfc.exe` or a WFC checkout next to this one, and fails without
+  it (`-NoCorpus` builds without).
 - Format with the pinned tools (`.clang-format`, `.gersemirc`); do not
   hand-tune around them. Sources are UTF-8 with LF line endings.
 

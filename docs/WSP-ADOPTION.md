@@ -42,7 +42,7 @@ adoption (this file), and a controlled release. Status as of this branch:
 | WSP submodule pinned | `architecture/adr-0001`, requirements README | Done: 1.4.0, same as WFC | Move with WFC when WSP is updated |
 | Formatter configs | `style/source-style.md`, `templates/source-style-configurations.md` (WSP-LANG-0002, -0010) | Done: `.clang-format`, `.gersemirc`, `.editorconfig`; the sources already conform | None |
 | Physical style (80 columns, LF, UTF-8) | WSP-STYLE-0001 to 0004 | Done: `Test-SourceStyle.ps1` passes on 34 files (`tests/corpus` is out of scope) | None |
-| Lint stage and commit gate | `processes/commit-checks.md` (WSP-CHECK-0001 to 0008) | Lint done (`scripts/Invoke-Lint.ps1`, `.pre-commit-config.yaml`, blocking CI job); build and test stages missing | Add `Invoke-Build.ps1` and `Invoke-Tests.ps1` and their hooks; run x64 only locally |
+| Lint stage and commit gate | `processes/commit-checks.md` (WSP-CHECK-0001 to 0008) | Done: `.pre-commit-config.yaml` runs `Start-CommitGate.ps1` (machine-wide lock shared with the WFC gate, test progress window), `Invoke-Lint.ps1`, `Invoke-Build.ps1` and `Invoke-Tests.ps1`; x64 only locally; the blocking CI job runs the lint | `Test-PeHardening.ps1` in the build stage |
 | Pinned tools | WSP-CHECK-0007 | Done: `requirements-dev.txt` | None |
 | PowerShell and Python analysis | WSP-LANG-0007 | Not done: no PSScriptAnalyzer settings; two Python scripts | Add `PSScriptAnalyzerSettings.psd1` and a lint step when scripts grow |
 | Requirement format | `requirements/requirements-management.md`, `style/requirements-writing.md` | Done: seven `REQ-NNNN` files (`REQ-0001` to `REQ-0007`) in the library's own namespace, each with Verification (test-case links) and Relationships; the status stays Proposed until the controls are probed against VB6 | Move to Approved with the first release |
@@ -60,7 +60,7 @@ adoption (this file), and a controlled release. Status as of this branch:
 
 | Item | Disposition |
 | --- | --- |
-| Build and test hooks | Open: see the lint row above |
+| Build and test hooks | Closed: the gate has gate-start, lint, build and test hooks |
 | Requirement and test-case numbering | Closed: `REQ-NNNN` and `TC-NNNN` from 0001 in this repository (`docs/id-map.md`) |
 | Traceability check | Closed: part of the lint stage |
 | Signing | Planned for the first release |
