@@ -30,26 +30,36 @@ Target: `wfc_mscomctl2` (static library, or `wfcmscomctl2.dll` with
 
 ## Screenshots
 
-![The UpDown example: a vertical and a horizontal UpDown](docs/images/updown.png)
+The examples in `examples/` are small Visual Basic programs, run with
+`wfc run examples/<name>/<name>.vbp --gui`. They share the look of the WFC
+games (`examples/modTheme.bas`): a navy window, a raised panel with a thin edge
+and a soft shadow, a teal heading and amber readouts. The controls inside are
+the system's own. `scripts/New-Screenshots.ps1` regenerates the pictures.
 
-The UpDown example (`examples/updown`), run with
-`wfc run examples/updown/updown.vbp --gui`.
+![The UpDown example: a vertical and a horizontal UpDown with their values](docs/images/updown.png)
 
-![The FlatScrollBar example: a horizontal and a vertical FlatScrollBar](docs/images/flatscrollbar.png)
+**UpDown** (`examples/updown`): a vertical UpDown from 1 to 20 and a
+horizontal one that wraps from 100 to 0.
 
-The FlatScrollBar example (`examples/flatscrollbar`).
+![The FlatScrollBar example: a horizontal and a vertical scroll bar with their values](docs/images/flatscrollbar.png)
 
-![The MonthView example: a calendar with week numbers and a bold day](docs/images/monthview.png)
+**FlatScrollBar** (`examples/flatscrollbar`): both orientations, each with its
+value.
 
-The MonthView example (`examples/monthview`).
+![The MonthView example: a calendar with week numbers and a bold day, and the selected date](docs/images/monthview.png)
+
+**MonthView** (`examples/monthview`): week numbers, a bold day (15 October) and
+the selected date.
 
 ![The DTPicker example: long date, short date with a check box, time with spin arrows, custom format](docs/images/dtpicker.png)
 
-The DTPicker example (`examples/dtpicker`).
+**DTPicker** (`examples/dtpicker`): long date, short date with a check box,
+time with spin arrows and a custom format.
 
-![The Animation example: a clip playing in the control](docs/images/animation.png)
+![The Animation example: a spinner playing in the control](docs/images/animation.png)
 
-The Animation example (`examples/animation`).
+**Animation** (`examples/animation`): a spinner clip (`clip.avi`, made by
+`scripts/make_example_clip.py`); a click stops and starts it.
 
 ## Roadmap, compatibility and platforms
 

@@ -64,6 +64,7 @@ adoption (this file), and a controlled release. Status as of this branch:
 | Requirement and test-case numbering | Closed: `REQ-NNNN` and `TC-NNNN` from 0001 in this repository (`docs/id-map.md`) |
 | Traceability check | Closed: part of the lint stage |
 | Signing | Planned for the first release |
+| CI screenshots (`render_terminal.py`, `capture_web.py`) | Open, owner decision: these files are identical in every WFC library (a WFC test checks the copies), so restyling them to the house look needs a change in all libraries at once |
 
 The earlier open item "80-column style" is closed: the sources, including the
 generated tables, already satisfy it; the only long lines were in `ci.yml` and
