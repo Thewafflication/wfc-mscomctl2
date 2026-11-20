@@ -24,6 +24,7 @@ reused here.
 
 ## Test cases
 
+The CTest names listed here are those of this repository; when another project (WFC) mounts the library they carry the prefix `wfc-mscomctl2-` (`WFC_MSCOMCTL2_TEST_PREFIX`).
 The WFC names are CTest names. `TC-MP0010-mscomctl2-*` were registered by this
 library's `CMakeLists.txt`; `TC-MP0002-corpus-<case>` are registered by the WFC
 repository for every `*.expected` file it finds under `lib/*/tests/corpus`, so

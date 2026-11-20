@@ -35,6 +35,23 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   endif()
 endif()
 
+# Test names. Inside this library's own repository a CTest name is
+# TC-NNNN-<name>. When another project mounts the library (add_subdirectory),
+# the names carry the library name, wfc-mscomctl2-TC-NNNN-<name>, so that the
+# names of different libraries never collide. WFC_MSCOMCTL2_TEST_PREFIX holds
+# that prefix: empty for the top-level project, "wfc-mscomctl2-" otherwise. The
+# including project may set it (even to empty) before add_subdirectory. The
+# TC-NNNN identifiers inside the names never change. (PROJECT_IS_TOP_LEVEL is
+# inherited by subdirectories of the parent, so the source directory decides.)
+if(NOT DEFINED WFC_MSCOMCTL2_TEST_PREFIX)
+  if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(WFC_MSCOMCTL2_TEST_PREFIX "")
+  else()
+    set(WFC_MSCOMCTL2_TEST_PREFIX "wfc-mscomctl2-")
+  endif()
+endif()
+set(wfc_tp "${WFC_MSCOMCTL2_TEST_PREFIX}")
+
 if(NOT DEFINED WFC_OCX_SHARED)
   set(WFC_OCX_SHARED OFF)
 endif()
@@ -147,9 +164,9 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
   if(COMMAND wsp_enable_hardening)
     wsp_enable_hardening(mscomctl2_tables_test)
   endif()
-  add_test(NAME TC-0001-tables COMMAND mscomctl2_tables_test)
+  add_test(NAME ${wfc_tp}TC-0001-tables COMMAND mscomctl2_tables_test)
   set_tests_properties(
-    TC-0001-tables
+    ${wfc_tp}TC-0001-tables
     PROPERTIES LABELS "unit;mscomctl2" TIMEOUT 120
   )
 
@@ -162,9 +179,9 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
   if(COMMAND wsp_enable_hardening)
     wsp_enable_hardening(mscomctl2_updown_test)
   endif()
-  add_test(NAME TC-0002-updown-model COMMAND mscomctl2_updown_test)
+  add_test(NAME ${wfc_tp}TC-0002-updown-model COMMAND mscomctl2_updown_test)
   set_tests_properties(
-    TC-0002-updown-model
+    ${wfc_tp}TC-0002-updown-model
     PROPERTIES LABELS "unit;mscomctl2" TIMEOUT 120
   )
 
@@ -177,9 +194,12 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
   if(COMMAND wsp_enable_hardening)
     wsp_enable_hardening(mscomctl2_scrollbar_test)
   endif()
-  add_test(NAME TC-0003-scrollbar-model COMMAND mscomctl2_scrollbar_test)
+  add_test(
+    NAME ${wfc_tp}TC-0003-scrollbar-model
+    COMMAND mscomctl2_scrollbar_test
+  )
   set_tests_properties(
-    TC-0003-scrollbar-model
+    ${wfc_tp}TC-0003-scrollbar-model
     PROPERTIES LABELS "unit;mscomctl2" TIMEOUT 120
   )
 
@@ -192,9 +212,12 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
   if(COMMAND wsp_enable_hardening)
     wsp_enable_hardening(mscomctl2_monthview_test)
   endif()
-  add_test(NAME TC-0004-monthview-model COMMAND mscomctl2_monthview_test)
+  add_test(
+    NAME ${wfc_tp}TC-0004-monthview-model
+    COMMAND mscomctl2_monthview_test
+  )
   set_tests_properties(
-    TC-0004-monthview-model
+    ${wfc_tp}TC-0004-monthview-model
     PROPERTIES LABELS "unit;mscomctl2" TIMEOUT 120
   )
 
@@ -207,9 +230,9 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
   if(COMMAND wsp_enable_hardening)
     wsp_enable_hardening(mscomctl2_dtpicker_test)
   endif()
-  add_test(NAME TC-0005-dtpicker-model COMMAND mscomctl2_dtpicker_test)
+  add_test(NAME ${wfc_tp}TC-0005-dtpicker-model COMMAND mscomctl2_dtpicker_test)
   set_tests_properties(
-    TC-0005-dtpicker-model
+    ${wfc_tp}TC-0005-dtpicker-model
     PROPERTIES LABELS "unit;mscomctl2" TIMEOUT 120
   )
 
@@ -227,13 +250,13 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
       wsp_enable_hardening(mscomctl2_dll_test)
     endif()
     add_test(
-      NAME TC-0006-dll
+      NAME ${wfc_tp}TC-0006-dll
       COMMAND
         mscomctl2_dll_test "$<TARGET_FILE:wfc_mscomctl2>"
         "${WFC_MSCOMCTL2_VERSION}" "${WFC_LIB_TARGET}"
     )
     set_tests_properties(
-      TC-0006-dll
+      ${wfc_tp}TC-0006-dll
       PROPERTIES
         LABELS "integration;mscomctl2"
         RESOURCE_LOCK registry
@@ -278,7 +301,7 @@ if(
       )
     endif()
     add_test(
-      NAME TC-${wfc_corpus_id}-${wfc_corpus_slug}
+      NAME ${wfc_tp}TC-${wfc_corpus_id}-${wfc_corpus_slug}
       COMMAND
         "${CMAKE_COMMAND}" "-DWFC=${WFC_EXE}"
         "-DINPUT=${wfc_corpus_dir}/${wfc_corpus_name}.vbp"
@@ -287,7 +310,7 @@ if(
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/run_corpus_case.cmake"
     )
     set_tests_properties(
-      TC-${wfc_corpus_id}-${wfc_corpus_slug}
+      ${wfc_tp}TC-${wfc_corpus_id}-${wfc_corpus_slug}
       PROPERTIES
         LABELS "corpus;mscomctl2"
         TIMEOUT 120

@@ -46,7 +46,8 @@ libraries. It follows WSP (the `wsp/` submodule); the adoption status is in
 
 - Requirements are `requirements/req-NNNN-<title>.md` (`REQ-NNNN`); test
   cases are `TC-NNNN`: the specification `tests/tc-NNNN-<title>.tex`, the
-  runner `tests/run-tc-NNNN.ps1` and the CTest name `TC-NNNN-<short-name>`.
+  runner `tests/run-tc-NNNN.ps1` and the CTest name `TC-NNNN-<short-name>` (`wfc-mscomctl2-TC-NNNN-<short-name>` when another
+  project mounts the library; `WFC_MSCOMCTL2_TEST_PREFIX`).
   Numbers run from 0001 in this repository's own namespace and are never
   reused or renumbered; `docs/id-map.md` maps the old WFC identifiers.
   `wsp/tools/Test-Traceability.ps1` checks the links (run by the lint stage).

@@ -2,8 +2,10 @@
 .SYNOPSIS
 Runs the CTest case of one test-case identifier (the tc-NNNN runners call it).
 .DESCRIPTION
-Runs `ctest -R ^<Id>-` on a configured and built folder, with
---no-tests=error: a case that is not registered in that build is a failure.
+Runs `ctest -R ^(wfc-mscomctl2-)?<Id>-` on a configured and built folder
+(the wfc-mscomctl2- prefix is there when another project mounts the library),
+with --no-tests=error: a case that is not registered in that build is a
+failure.
 A corpus case that CTest reports as skipped (no WFC_EXE) is not a failure.
 .PARAMETER Id
 The test-case identifier, for example TC-0002.
@@ -21,6 +23,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
-& ctest --test-dir $BuildDir -C $Configuration -R "^$Id-" --no-tests=error `
-    --output-on-failure
+$pattern = "^(wfc-mscomctl2-)?$Id-"
+& ctest --test-dir $BuildDir -C $Configuration -R $pattern `
+    --no-tests=error --output-on-failure
 exit $LASTEXITCODE
