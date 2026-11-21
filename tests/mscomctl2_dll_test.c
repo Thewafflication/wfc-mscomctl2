@@ -1,4 +1,4 @@
-/* Black-box check of wfcmscomctl2.dll: exports, version resource and the
+/* Black-box check of mscomct2.ocx: exports, version resource and the
  * registration round trip (see dll_check.h). Run by CTest with the DLL,
  * the version and the target as arguments. */
 #include "dll_check.h"

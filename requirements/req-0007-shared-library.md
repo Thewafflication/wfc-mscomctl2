@@ -7,7 +7,7 @@
 ## Statement
 
 In the shared build (`WFC_MSCOMCTL2_SHARED=ON`) the library is
-`wfcmscomctl2.dll`.
+`mscomct2.ocx`.
 
 - **Entry points.** The DLL shall export `DllCanUnloadNow` (S_OK while no
   object is alive), `DllGetClassObject`, `DllRegisterServer` and

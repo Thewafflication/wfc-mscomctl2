@@ -22,10 +22,10 @@ What is here:
   unsupported controls.
 - `include/wfc/ocx/control_class.hpp` and `registration.hpp`, identical in every
   WFC control library (a WFC test checks the copies).
-- `VERSION` and `TARGET`: the version, stamped into `wfcmscomctl2.dll`, and the
+- `VERSION` and `TARGET`: the version, stamped into `mscomct2.ocx`, and the
   Microsoft component it stands in for.
 
-Target: `wfc_mscomctl2` (static library, or `wfcmscomctl2.dll` with
+Target: `wfc_mscomctl2` (static library, or `mscomct2.ocx` with
 `WFC_MSCOMCTL2_SHARED=ON`; the parent default is `WFC_OCX_SHARED`).
 
 ## Screenshots
@@ -78,7 +78,7 @@ DLL's version resource (`FileVersion`, `Comments`).
 
 ## Registration with Windows
 
-`regsvr32 wfcmscomctl2.dll` (`/u` to remove) writes
+`regsvr32 mscomct2.ocx` (`/u` to remove) writes
 `Software\WFC\Libraries\mscomctl2` (version, target, path) and, for every
 control, a class under WFC's own ProgID and class id
 (`WFC.MSComCtl2.<Class>`, the class id is a UUID derived from the ProgID) with

@@ -35,7 +35,7 @@
 
 \def\TCProcedure{%
   \begin{enumerate}
-    \item Run \texttt{mscomctl2\_dll\_test} through CTest with the path of \texttt{wfcmscomctl2.dll}, the version and the target.
+    \item Run \texttt{mscomctl2\_dll\_test} through CTest with the path of \texttt{mscomct2.ocx}, the version and the target.
     \item Load the DLL; check the four COM entry points, that \texttt{DllCanUnloadNow} is \texttt{S\_OK}, and that \texttt{DllGetClassObject} refuses an unknown class.
     \item Compare the file version with \texttt{VERSION} and the \texttt{Comments} string with \texttt{Targets } and the target.
     \item Register with \texttt{WFC\_REGISTER\_MICROSOFT\_IDS=0}: check the library key (version, target, server) and for every class the ProgID, class id and \texttt{InprocServer32}; unregister and check that nothing is left. Repeat with \texttt{WFC\_REGISTER\_MICROSOFT\_IDS=1} and the Microsoft ids.

@@ -3,7 +3,7 @@
 //
 // The table is plain data. It is linked statically into the program or, when
 // the library is built shared (WFC_MSCOMCTL2_SHARED), loaded from
-// wfcmscomctl2.dll; only the accessor crosses the library boundary.
+// mscomct2.ocx; only the accessor crosses the library boundary.
 
 #ifndef WFC_MSCOMCTL2_MSCOMCTL2_HPP
 #define WFC_MSCOMCTL2_MSCOMCTL2_HPP

@@ -3,7 +3,7 @@
 Runs the library build stage (x64 Debug).
 .DESCRIPTION
 Configures and builds the library twice in out/: the static library
-(out/build) and the shared library, wfcmscomctl2.dll (out/build-shared),
+(out/build) and the shared library, mscomct2.ocx (out/build-shared),
 which also holds the DLL test. The corpus cases (TC-0007 to TC-0016) run
 through wfc, found by Resolve-WfcExecutable (WFC_EXE); without it the stage
 fails unless -NoCorpus is given. Only x64 is built here; CI builds x86 and
