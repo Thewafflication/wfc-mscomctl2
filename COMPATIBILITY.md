@@ -1,6 +1,6 @@
 # wfc-mscomctl2: compatibility with mscomct2.ocx
 
-Target: **MSCOMCT2.OCX 6.00.8177 (Microsoft Common Controls-2, Visual Basic 6.0)**. Library version: **0.6.0**.
+Target: **MSCOMCT2.OCX 6.00.8177 (Microsoft Common Controls-2, Visual Basic 6.0)**. Library version: **0.6.1**.
 
 Generated from the type library of the installed `MSCOMCT2.OCX` (file version
 6.00.8177), retained in WFC as `evidence/reference/mscomct2-2.0-type-library.json`.
